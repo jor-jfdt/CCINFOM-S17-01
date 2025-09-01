@@ -3,7 +3,8 @@
 <!---Quick Access Buttons--->
 [![Contributors][contributors-shield]][contributors-url]
 [![Issues][issues-shield]][issues-url]
-
+[![Pull Request][pullRequest-shield]]pullRequest-url]
+[![DB Project Specs][Specs-shield]][Specs-url]
 <!---Shield References--->
 [contributors-shield]:
 https://img.shields.io/github/contributors/jor-jfdt/CCINFOM-S17-01?style=for-the-badge
@@ -13,6 +14,14 @@ https://github.com/jor-jfdt/CCINFOM-S17-01/graphs/contributors
 https://img.shields.io/github/issues/jor-jfdt/CCINFOM-S17-01?style=for-the-badge
 [issues-url]:
 https://github.com/jor-jfdt/CCINFOM-S17-01/issues
+[pullRequest-shield]:
+https://img.shields.io/github/issues-pr/jor-jfdt/CCINFOM-S17-01?style=for-the-badge
+[pullRequest-url]:
+https://github.com/jor-jfdt/CCINFOM-S17-01/pulls
+[Specs-shield]:
+https://img.shields.io/badge/DB-Specs-brightgreen?style=for-the-badge&color=brightgreen
+[Specs-url]:
+https://drive.google.com/file/d/1vTEbrqZcX2hyIaGHVvhlYiyKkR-RU3Oo/view?usp=sharing
 
 # CCINFOM-S17-01
 Data Base Application Project
