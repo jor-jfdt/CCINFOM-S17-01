@@ -2,10 +2,13 @@
 
 <!---Quick Access Buttons--->
 [![Contributors][contributors-shield]][contributors-url]
+[![Issues][issues-shield]][issues-url]
+[![Pull Request][pullRequest-shield]]pullRequest-url]
+[![DB Project Specs][Specs-shield]][Specs-url]
 
 <!---Shield References--->
 [contributors-shield]:
-https://img.shields.io/github/contributors/jor-jfdt/CCINFOM-S17-01?style=for-the-badge
+https://img.shields.io/github/contributors/jor-jfdt/CCINFOM-S17-01?style=flat
 [contributors-url]:
 https://github.com/jor-jfdt/CCINFOM-S17-01/graphs/contributors
 
