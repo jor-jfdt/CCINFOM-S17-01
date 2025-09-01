@@ -3,7 +3,7 @@
 <!---Quick Access Buttons--->
 [![Contributors][contributors-shield]][contributors-url]
 [![Issues][issues-shield]][issues-url]
-[![Pull Request][pullRequest-shield]]pullRequest-url]
+[![Pull Request][pullRequest-shield]][pullRequest-url]
 [![DB Project Specs][Specs-shield]][Specs-url]
 <!---Shield References--->
 [contributors-shield]:
