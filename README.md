@@ -41,6 +41,44 @@ You have to already install the required software by Week 2.
 Database Applications Project
 The project must be stored in a GitHub Repository named after your group code. Each group member must have an account in GitHub.Links to an external site. Have your group leader create the project and make all the members a collaborator. During the demo and defense, you will pull the latest project files from the GitHub Repository. Any updates in the repository after submission will make your project considered late or not submitted at all.
 
+# HMO Monitoring Application
 
+An application to track and encode entries of records related to a HMO Organization. The records include the following:
+  - Client Record
+    [member_ID, first_name, last_name, middle_initial, birthdate, is_employee, sex, enrollment_date, is_active]
+    
+  - Illness Record
+    [illness_ID, illness_name, treatment_summary, icd10_code]
 
-Database Applications Project Specifications
+  - Hospital Record
+    [hospital_ID, hospital_name, address, city, zipcode, contact_no, email]
+
+  - Medical Doctor Record
+    
+    [doctor_ID, first_name, last_name, middle_initial, doctor_type, contact_no, email]
+    
+  - Company Policy Record
+    [plan_ID, plan_name, coverage_type, coverage_limit, premium_amount, payment_period, inclusion]
+    
+  - Client Policy Record
+    [policy_ID, member_ID, plan_ID company_ID, preexisting_illnesses, effective_date, expiry_date, status]
+
+  - Payment of Premium Tracker Record
+    [payment_ID, member_IDplan_ID, amount, payment_date, payment_method, status]
+    
+  - Claims Tracker Record
+    [claim_ID, member_ID. illness_ID, hospital_ID, doctor_ID, service_dateservice_type, covered_amount, status]
+    
+  - Payout of Claims Tracker Record
+    [payout_ID, hospital_ID, doctor_ID, service_date, service_type, service_amount, payout_amount, payout_date, status]
+    
+  - LOA Request Record
+    [claim_IDmember_ID, illness_ID. hospital_ID, doctor_ID. service_type, status]
+
+This application include the following transactions:
+  - Buying of Company Policy Plan
+  - Client Payment of Premiums
+  - Consultation with Doctor
+  - Hospitalization
+  - Payout to Hospital
+  - Payout to Doctor
