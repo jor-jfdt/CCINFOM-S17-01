@@ -54,7 +54,6 @@ An application to track and encode entries of records related to a HMO Organizat
     [hospital_ID, hospital_name, address, city, zipcode, contact_no, email]
 
   - Medical Doctor Record
-    
     [doctor_ID, first_name, last_name, middle_initial, doctor_type, contact_no, email]
     
   - Company Policy Record
