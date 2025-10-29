@@ -1,7 +1,5 @@
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ComponentAdapter;
-import java.awt.event.ComponentEvent;
 
 public class AppGUI extends JFrame {
     public AppGUI(String title) {
@@ -9,120 +7,97 @@ public class AppGUI extends JFrame {
         this.setPreferredSize(new Dimension(screenWidth, screenHeight));
         this.setDefaultCloseOperation(EXIT_ON_CLOSE);
 
-        prevHeight = this.getHeight();
-        prevWidth = this.getWidth();
-
-        this.addComponentListener(new ComponentAdapter() {
-            @Override
-            public void componentResized(ComponentEvent e) {
-                if (!isResizing)
-                maintainAspectRatio();
-            }
-        });
-
-        createCenterPanel();
+        cardContainer = new JPanel(new CardLayout());
 
         this.setMinimumSize(new Dimension(640, 360));
         this.setMaximumSize(new Dimension(1920, 1080));
-        this.pack();
 
         updateScreenDimensions(this.getWidth(), this.getHeight());
+
+        initializePanels();
+        showPanel("main");
 
         this.setLocationRelativeTo(null);
         this.setVisible(true);
     }
 
-    private void createCenterPanel() {
-        int curWidth = this.getWidth();
-        int curHeight = this.getHeight();
-
-        fontSize = Math.max(curWidth / 40, curHeight / 25);
-        buttonFontSize = Math.max(curWidth / 80, curHeight / 40);
-        buttonWidth = curWidth / 4;
-        buttonHeight = curHeight / 8;
-
-        Dimension buttonSize = new Dimension(buttonWidth, buttonHeight);
-
-        centerPanel =  new JPanel();
-        buttonPanel = new JPanel();
+    private void createMainPanel() {
+        JPanel buttonPanel = new JPanel();
+        mainPanel = new JPanel();
         menuButtons = new JButton[3];
-        JLabel applicationName = new JLabel("HMO Monitoring System");
+        applicationTitleLabel = new JLabel("HMO Monitoring System"); // Store reference
 
-        centerPanel.setLayout(new BoxLayout(centerPanel, BoxLayout.Y_AXIS));
-        centerPanel.add(Box.createVerticalGlue());
-        centerPanel.add(applicationName);
-        centerPanel.add(Box.createRigidArea(new Dimension(0,curHeight / 20)));
+        mainPanel.setLayout(new BoxLayout(mainPanel, BoxLayout.Y_AXIS));
+        mainPanel.add(Box.createVerticalGlue());
+        mainPanel.add(applicationTitleLabel);
+        mainPanel.add(Box.createRigidArea(new Dimension(0, getHeight() / 20)));
 
-        applicationName.setFont(new Font("Algerian", Font.BOLD, fontSize));
-        applicationName.setAlignmentX(Component.CENTER_ALIGNMENT);
+        applicationTitleLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
 
         buttonPanel.setLayout(new BoxLayout(buttonPanel, BoxLayout.X_AXIS));
         buttonPanel.setAlignmentX(Component.CENTER_ALIGNMENT);
         buttonPanel.add(Box.createHorizontalBox());
 
         menuButtons[0] = new JButton("Record Management");
-        menuButtons[1]  = new JButton("Manage Transaction");
-        menuButtons[2]  = new JButton("Generate Report");
+        menuButtons[1] = new JButton("Manage Transaction");
+        menuButtons[2] = new JButton("Generate Report");
 
         for (int i = 0; i < menuButtons.length; i++) {
-            JButton button = menuButtons[i];
-            button.setPreferredSize(buttonSize);
-            button.setMaximumSize(buttonSize);
-            button.setFont(new Font("Algerian", Font.PLAIN, buttonFontSize));
-
-            buttonPanel.add(button);
+            buttonPanel.add(menuButtons[i]);
             if (i < menuButtons.length - 1) {
-                buttonPanel.add(Box.createRigidArea(new Dimension(curWidth / 100, 0))); // Horizontal spacing
+                buttonPanel.add(Box.createRigidArea(new Dimension(getWidth() / 100, 0)));
             }
         }
+
         buttonPanel.add(Box.createHorizontalBox());
+        mainPanel.add(buttonPanel);
+        mainPanel.add(Box.createVerticalGlue());
 
-        centerPanel.add(buttonPanel);
-        centerPanel.add(Box.createVerticalGlue());
-
-        this.add(centerPanel, BorderLayout.CENTER);
-        this.setVisible(true);
+        update();
     }
 
-    private void maintainAspectRatio() {
-        int ap_width;
-        int ap_height;
+    public void initializePanels() {
+        createMainPanel();
+        recordPanel = new RecordPanel();
 
-        isResizing = true;
+        cardContainer.add(mainPanel, "main");
+        cardContainer.add(recordPanel, "record");
 
-        Rectangle bounds = getBounds();
-        int width = bounds.width;
-        int height = bounds.height;
+        this.add(cardContainer, BorderLayout.CENTER);
+    }
 
-        if (width == prevWidth && height == prevHeight) {
-            isResizing = false;
-            return;
+    public void showPanel(String panelType) {
+        CardLayout cardLayout = (CardLayout) cardContainer.getLayout();
+
+        switch (panelType.toLowerCase()) {
+            case "main":
+                cardLayout.show(cardContainer, "main");
+                currentPanel = "main";
+                break;
+            case "record":
+                cardLayout.show(cardContainer, "record");
+                currentPanel = "record";
+                break;
+        }
+    }
+
+    public void update() {
+        int fontSize = Math.max(screenWidth / 40, screenHeight / 25);
+        int buttonFontSize = Math.max(screenWidth / 80, screenHeight / 40);
+        Dimension buttonSize = new Dimension(screenWidth / 4, screenHeight / 8);
+
+        // Direct field access - no component tree traversal needed
+        applicationTitleLabel.setFont(new Font("Algerian", Font.BOLD, fontSize));
+
+        Font buttonFont = new Font("Algerian", Font.PLAIN, buttonFontSize);
+        for (JButton button : menuButtons) {
+            button.setPreferredSize(buttonSize);
+            button.setMaximumSize(buttonSize);
+            button.setFont(buttonFont);
         }
 
-        if (Math.abs(width - prevWidth) > Math.abs(height - prevHeight)) {
-            ap_width = width;
-            ap_height =  (int) (ap_width / ASPECT_RATIO);
-        } else {
-            ap_height = height;
-            ap_width = (int) (ap_height * ASPECT_RATIO);
-        }
-
-        Rectangle newBounds = getBounds();
-        prevWidth = ap_width;
-        prevHeight = ap_height;
-
-        updateScreenDimensions(ap_width, ap_height);
-
-        SwingUtilities.invokeLater(() -> {
-            setBounds(newBounds.x, newBounds.y, prevWidth, prevHeight);
-
-            getContentPane().removeAll();
-            createCenterPanel();
-            revalidate();
-            repaint();
-
-            isResizing = false;
-        });
+        if (recordPanel != null)
+            recordPanel.update();
     }
 
     public static void updateScreenDimensions(int width, int height) {
@@ -130,26 +105,20 @@ public class AppGUI extends JFrame {
         screenHeight = height;
     }
 
-    public JPanel getCenterPanel() {
-        return centerPanel;
+    public JPanel getMainPanel() {
+        return mainPanel;
     }
 
     public JButton[] getMenuButtons() {
         return menuButtons;
     }
 
-    private JPanel centerPanel;
-    private JPanel buttonPanel;
+    private final JPanel cardContainer;
+    private JLabel applicationTitleLabel;
+    private JPanel mainPanel;
+    private RecordPanel recordPanel;
     private JButton[] menuButtons;
-
-    private boolean isResizing = false;
-    private static int prevWidth;
-    private static int prevHeight;
-
-    public static int fontSize;
-    public static int buttonFontSize;
-    public static int buttonWidth;
-    public static int buttonHeight;
+    private String currentPanel = "main";
 
     public static final double ASPECT_RATIO = 16.0 / 9.0;
     public static int screenWidth = 1280;
