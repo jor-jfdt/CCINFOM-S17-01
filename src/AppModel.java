@@ -25,18 +25,18 @@ public class AppModel {
 		try {
 			s = CONNECTION.createStatement();
 			r = s.executeQuery(sqlStatement);
+			result_sets.add(r);
+			printSuccessLog(AM_SMSG.AMS_PROCSTATEMENT);
+			if (!r.next())
+				printSuccessLog(AM_SMSG.AMS_PROCSTATEMENT_EMPTY);
 		} catch (SQLException se) {
 			se.printStackTrace();
 			modelThrowError(AM_EMSG.AME_PROCSTATEMENT);
 		}
-		result_sets.add(r);
-		printSuccessLog(AM_SMSG.AMS_PROCSTATEMENT);
-		if (!r.next())
-			printSuccessLog(AM_SMSG.AMS_PROCSTATEMENT_EMPTY);
 		return r;
 	}
 	
-	DefaultTableModel makeTableModel(ResultSet rs) throws SQLException {
+	DefaultTableModel makeTableModel(ResultSet rs, boolean releaseOnReturn) throws SQLException {
 		ResultSetMetaData rsmd = rs.getMetaData();
 		DefaultTableModel dtm = new DefaultTableModel();
 		Integer cols = rsmd.getColumnCount();
@@ -45,12 +45,30 @@ public class AppModel {
 		for (int i = 0; i < cols; i++)
 			dtm.addColumn(rsmd.getColumnLabel(i + 1));
 		// Rows
-		while (rs.next()) {
+		do {
 			rowSet = new Object[cols];
 			for (int i = 0; i < cols; i++)
 				rowSet[i] = rs.getObject(i + 1);
 			dtm.addRow(rowSet);
 			rowSet = null;
+		} while (rs.next());
+		if (releaseOnReturn)
+			releaseResultSet(rs);
+		return dtm;
+	}
+	
+	DefaultTableModel makeTableFromStatement(String query) throws SQLException {
+		ResultSet proc = null;
+		Integer procHash;
+		DefaultTableModel dtm = null;
+		try {
+			proc = processStatement(query);
+			procHash = proc.hashCode();
+			dtm = makeTableModel(proc, true);
+			System.out.printf("[%s] INFO(table): Table generated for ResultSet@%x.\n", CONNECTION_NAME, procHash);
+		} catch (SQLException se) {
+			se.printStackTrace();
+			throw new SQLException("An error occured generating a table from query.");
 		}
 		return dtm;
 	}
@@ -59,10 +77,11 @@ public class AppModel {
 		if (result_sets.contains(rs)) {
 			try {
 				rs.close();
-				System.out.printf("[%s] INFO(release): Released ResultSet@%x from memory", CONNECTION_NAME, rs.hashCode());
+				System.out.printf("[%s] INFO(release): Released ResultSet@%x from memory.\n", CONNECTION_NAME, rs.hashCode());
 				rs = null;
 				result_sets.remove(rs);
 			} catch (SQLException se) {
+				se.printStackTrace();
 				throw new SQLException(String.format("Unable to release ResultSet@%x from memory.", rs.hashCode()));
 			}
 		}
@@ -78,6 +97,7 @@ public class AppModel {
 		try {
 			Class.forName("com.mysql.cj.jdbc.Driver");
 			c = DriverManager.getConnection(JDBC_MAIN_ADDRESS + "/" + n, u, p);
+			printSuccessLog(AM_SMSG.AMS_MAKECONNECTION);
 		} catch (SQLException se) {
 			se.printStackTrace();
 			modelThrowError(AM_EMSG.AME_MAKECONNECTION);
@@ -85,7 +105,6 @@ public class AppModel {
 			cnfe.printStackTrace();
 			modelThrowError(AM_EMSG.AME_JCONNECTOR);
 		}
-		printSuccessLog(AM_SMSG.AMS_MAKECONNECTION);
 		return c;
 	}
 	
@@ -114,7 +133,7 @@ public class AppModel {
 		}
 	}
 	
-	private CopyOnWriteArrayList<ResultSet> result_sets = new CopyOnWriteArrayList<>();
+	private static CopyOnWriteArrayList<ResultSet> result_sets = new CopyOnWriteArrayList<>();
 	
 	private final Connection CONNECTION;
 	private final String CONNECTION_NAME;
