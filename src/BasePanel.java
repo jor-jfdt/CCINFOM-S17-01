@@ -1,5 +1,6 @@
 import javax.swing.*;
 import java.awt.*;
+import java.util.Map;
 
 public abstract class BasePanel extends BackgroundPanel {
     public BasePanel(String title, String backgroundImage) {
@@ -57,7 +58,7 @@ public abstract class BasePanel extends BackgroundPanel {
 
         rightPanel = new JPanel();
         rightPanel.setOpaque(true);
-        rightPanel.setPreferredSize(new Dimension(233, 100));
+        rightPanel.setPreferredSize(new Dimension(250, 100));
         rightPanel.setBackground(Color.LIGHT_GRAY);
         gbc.gridx = 1;
         gbc.gridy = 1;
@@ -67,6 +68,22 @@ public abstract class BasePanel extends BackgroundPanel {
         gbc.fill = GridBagConstraints.BOTH;
         gbc.insets = new Insets(10, 5, 10, 10);
         add(rightPanel, gbc);
+    }
+
+    protected void initializeCardPanels(Map<String, JPanel> cardPanelMap) {
+        options = new JButton[cardPanelMap.size()];
+        int i = 0;
+        for (String cardKey : cardPanelMap.keySet()) {
+            JPanel cardPanel = cardPanelMap.get(cardKey);
+            rightPanel.add(cardPanel, cardKey);
+            JButton button = new JButton(cardKey);
+            leftPanel.add(button);
+            options[i] = button;
+            i++;
+            if (i < cardPanelMap.size() - 1) {
+                leftPanel.add(Box.createRigidArea(new Dimension(0, 10)));
+            }
+        }
     }
 
     protected void update() {
@@ -89,4 +106,5 @@ public abstract class BasePanel extends BackgroundPanel {
     protected JPanel rightPanel;
     protected JButton[] options;
     protected JButton hideButton;
+    protected CardLayout rightCardLayout;
 }
