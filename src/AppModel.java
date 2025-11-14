@@ -10,10 +10,10 @@ public class AppModel {
 	AppModel() throws SQLException, ClassNotFoundException {
 		// Replace with database name
 		// Eto nalang muna for now hahaha
-		CONNECTION_NAME = "ccinfomdemo";
+		CONNECTION_NAME = "insurance_database";
 		// Change credentials accordingly
 		MYSQL_USERNAME = "root";
-		MYSQL_PASSWORD = "hajtubtyacty1Bgmail.com";
+		MYSQL_PASSWORD = "123456";
 		CONNECTION = makeConnection(CONNECTION_NAME, MYSQL_USERNAME, MYSQL_PASSWORD);
 	}
 	

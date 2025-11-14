@@ -11,7 +11,7 @@ public class ClientRecord {
     }
 
 
-    public static void connectDB() {
+    public static void connectDB(Connection connection, String db_url, String user, String password) {
         try{
             connection = DriverManager.getConnection(db_url, user, password);
         } catch(SQLException e) {
