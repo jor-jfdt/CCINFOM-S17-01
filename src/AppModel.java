@@ -13,7 +13,7 @@ public class AppModel {
 		CONNECTION_NAME = "ccinfomdemo";
 		// Change credentials accordingly
 		MYSQL_USERNAME = "root";
-		MYSQL_PASSWORD = "password";
+		MYSQL_PASSWORD = "hajtubtyacty1Bgmail.com";
 		CONNECTION = makeConnection(CONNECTION_NAME, MYSQL_USERNAME, MYSQL_PASSWORD);
 	}
 	
@@ -37,23 +37,33 @@ public class AppModel {
 	}
 	
 	DefaultTableModel makeTableModel(ResultSet rs, boolean releaseOnReturn) throws SQLException {
-		ResultSetMetaData rsmd = rs.getMetaData();
-		DefaultTableModel dtm = new DefaultTableModel();
-		Integer cols = rsmd.getColumnCount();
+		if (null == rs)
+			throw new NullPointerException("rs is null");
+		ResultSetMetaData rsmd = null;
+		DefaultTableModel dtm = null;
+		Integer cols;
 		Object[] rowSet;
-		// Columns
-		for (int i = 0; i < cols; i++)
-			dtm.addColumn(rsmd.getColumnLabel(i + 1));
-		// Rows
-		do {
-			rowSet = new Object[cols];
+		try {
+			rsmd = rs.getMetaData();
+			dtm = new DefaultTableModel();
+			cols = rsmd.getColumnCount();
+			// Columns
 			for (int i = 0; i < cols; i++)
-				rowSet[i] = rs.getObject(i + 1);
-			dtm.addRow(rowSet);
-			rowSet = null;
-		} while (rs.next());
-		if (releaseOnReturn)
-			releaseResultSet(rs);
+				dtm.addColumn(rsmd.getColumnLabel(i + 1));
+			// Rows
+			do {
+				rowSet = new Object[cols];
+				for (int i = 0; i < cols; i++)
+					rowSet[i] = rs.getObject(i + 1);
+				dtm.addRow(rowSet);
+				rowSet = null;
+			} while (rs.next());
+			if (releaseOnReturn)
+				releaseResultSet(rs);
+		} catch (SQLException se) {
+			se.printStackTrace();
+			throw new SQLException(String.format("Unable to make a table model for ResultSet@%x.", rs.hashCode()));
+		}
 		return dtm;
 	}
 	
@@ -88,8 +98,15 @@ public class AppModel {
 	}
 	
 	void releaseAllResultSets() throws SQLException {
-		for (ResultSet r : result_sets)
-			releaseResultSet(r);		
+		for (ResultSet r : result_sets) {
+			try {
+				releaseResultSet(r);
+			} catch (SQLException se) {
+				result_sets.remove(r);
+				System.out.printf("[%s] INFO(release_all): ResultSet@%x cannot be removed from memory, but still removing it from list.\n",
+					CONNECTION_NAME, r.hashCode());
+			}
+		}
 	}
 	
 	private Connection makeConnection(String n, String u, String p) throws SQLException, ClassNotFoundException {

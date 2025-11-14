@@ -7,7 +7,8 @@ public class Driver {
         AppGUI app = new AppGUI("Health Maintenance Organization");
         AppModel model = new AppModel();
 		
-		/* Sample SQL query pass with table test
+		/*
+		// Sample SQL query pass with table test
 		DefaultTableModel dtm1 = model.makeTableFromStatement("SELECT * FROM employee");
 		
 		JFrame jf = new JFrame("Sample table");
