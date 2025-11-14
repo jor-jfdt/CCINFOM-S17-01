@@ -5,13 +5,7 @@ import java.time.LocalDate;
 import javax.swing.table.DefaultTableModel;
 public class Driver {
     public static void main(String[] args) throws SQLException, ClassNotFoundException, InterruptedException {
-        try {
-            UIManager.setLookAndFeel("javax.swing.plaf.nimbus.NimbusLookAndFeel");
-            UIManager.put("Button.background", Color.LIGHT_GRAY);
-            UIManager.put("Button.foreground", Color.BLACK);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+        configureLookAndFeel();
 		AppGUI app = new AppGUI("Health Maintenance Organization");
         AppModel model = new AppModel();
 		AppController controller = new AppController(app, model);
@@ -44,5 +38,43 @@ public class Driver {
 			LocalDate.of(2025, 11, 14),
 			true
 		);
+	}
+
+	private static void configureLookAndFeel() {
+		try {
+			for (UIManager.LookAndFeelInfo info : UIManager.getInstalledLookAndFeels()) {
+				if ("Nimbus".equals(info.getName())) {
+					UIManager.setLookAndFeel(info.getClassName());
+					break;
+				}
+			}
+
+			// Customize Nimbus colors
+			UIManager.put("Button.background", new Color(200, 200, 255));
+			UIManager.put("Button.foreground", Color.DARK_GRAY);
+			UIManager.put("Button.font", new Font("Arial", Font.BOLD, 14));
+
+			UIManager.put("ScrollBar.thumb", new Color(100, 150, 200));
+			UIManager.put("ScrollBar.track", new Color(220, 220, 220));
+
+			UIManager.put("Panel.background", new Color(240, 240, 240));
+
+			UIManager.put("Label.font", new Font("Verdana", Font.PLAIN, 12));
+			UIManager.put("TextField.font", new Font("Verdana", Font.PLAIN, 12));
+			UIManager.put("Table.font", new Font("Verdana", Font.PLAIN, 12));
+
+			UIManager.put("nimbusBase", new Color(80, 120, 180));
+			UIManager.put("nimbusBlueGrey", new Color(190, 190, 190));
+			UIManager.put("control", new Color(230, 230, 230));
+
+		} catch (ClassNotFoundException | InstantiationException |
+				 IllegalAccessException | UnsupportedLookAndFeelException e) {
+			System.err.println("Failed to initialize Nimbus Look and Feel: " + e.getMessage());
+			try {
+				UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+			} catch (Exception ex) {
+				ex.printStackTrace();
+			}
+		}
 	}
 }
