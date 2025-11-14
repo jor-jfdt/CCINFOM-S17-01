@@ -3,7 +3,7 @@ import java.awt.*;
 
 public class ReportPanel extends BasePanel {
     public ReportPanel() {
-        super("Generate Report");
+        super("Generate Report", "app_wallpaper.png");
 
         options = new JButton[4];
         options[0] = new JButton("Financial Report");

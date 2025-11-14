@@ -3,7 +3,7 @@ import java.awt.*;
 
 public class TransactionPanel extends BasePanel {
     public TransactionPanel() {
-        super("Manage Transaction");
+        super("Manage Transaction", "app_wallpaper.png");
 
         options = new JButton[7];
         options[0] = new JButton("Buying of Company Policy Plan");

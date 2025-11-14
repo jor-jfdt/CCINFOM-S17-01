@@ -1,8 +1,9 @@
 import javax.swing.*;
 import java.awt.*;
 
-public abstract class BasePanel extends JPanel {
-    public BasePanel(String title) {
+public abstract class BasePanel extends BackgroundPanel {
+    public BasePanel(String title, String backgroundImage) {
+        super(backgroundImage);
         this.title = title;
         initializeComponents();
     }
@@ -22,23 +23,25 @@ public abstract class BasePanel extends JPanel {
         add(titleLabel, gbc);
 
         leftPanel = new JPanel();
-        leftPanel.setBackground(Color.BLUE);
-        leftPanel.setLayout(new BoxLayout(leftPanel, BoxLayout.Y_AXIS)); // Ensure proper layout
+        leftPanel.setOpaque(false); // Make transparent to show background
+        leftPanel.setLayout(new BoxLayout(leftPanel, BoxLayout.Y_AXIS));
 
         JScrollPane leftScrollPane = new JScrollPane(leftPanel);
+        leftScrollPane.setOpaque(false);
+        leftScrollPane.getViewport().setOpaque(false);
         leftScrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
         leftScrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
         leftScrollPane.setBorder(BorderFactory.createEmptyBorder());
-        leftScrollPane.getVerticalScrollBar().setUnitIncrement(16); // Smoother scrolling
+        leftScrollPane.getVerticalScrollBar().setUnitIncrement(16);
 
         hideButton = new JButton("◀");
-        hideButton.setPreferredSize(new Dimension(25, 0)); // Slightly smaller
-        hideButton.setMinimumSize(new Dimension(25, 0));
-        hideButton.setMaximumSize(new Dimension(25, Integer.MAX_VALUE));
+        hideButton.setPreferredSize(new Dimension(25, 50));
+        hideButton.setMinimumSize(new Dimension(25, 30));
         hideButton.setBackground(Color.LIGHT_GRAY);
         hideButton.setBorder(BorderFactory.createRaisedBevelBorder());
 
         JPanel leftContainer = new JPanel(new BorderLayout());
+        leftContainer.setOpaque(false);
         leftContainer.add(leftScrollPane, BorderLayout.CENTER);
         leftContainer.add(hideButton, BorderLayout.EAST);
         leftContainer.setPreferredSize(new Dimension(100, 100));
@@ -53,8 +56,9 @@ public abstract class BasePanel extends JPanel {
         add(leftContainer, gbc);
 
         rightPanel = new JPanel();
-        rightPanel.setBackground(Color.RED);
+        rightPanel.setOpaque(true);
         rightPanel.setPreferredSize(new Dimension(233, 100));
+        rightPanel.setBackground(Color.LIGHT_GRAY);
         gbc.gridx = 1;
         gbc.gridy = 1;
         gbc.gridwidth = 1;

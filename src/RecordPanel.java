@@ -3,7 +3,7 @@ import java.awt.*;
 
 public class RecordPanel extends BasePanel {
     public RecordPanel() {
-        super("Record Management");
+        super("Record Management", "app_wallpaper.png");
         createButtons();
     }
 
