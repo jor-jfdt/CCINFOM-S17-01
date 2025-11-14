@@ -1,8 +1,10 @@
 import java.sql.*;
+import javax.swing.table.DefaultTableModel;
+import java.util.concurrent.CopyOnWriteArrayList;
 public class AppModel {
 	// MySQL port
 	public static final String JDBC_MAIN_ADDRESS = "jdbc:mysql://localhost:3306";
-	public static enum AM_SMSG { AMS_MAKECONNECTION, AMS_PROCSTATEMENT }
+	public static enum AM_SMSG { AMS_MAKECONNECTION, AMS_PROCSTATEMENT, AMS_PROCSTATEMENT_EMPTY }
 	public static enum AM_EMSG { AME_MAKECONNECTION, AME_PROCSTATEMENT, AME_JCONNECTOR }
 	
 	AppModel() throws SQLException, ClassNotFoundException {
@@ -27,8 +29,48 @@ public class AppModel {
 			se.printStackTrace();
 			modelThrowError(AM_EMSG.AME_PROCSTATEMENT);
 		}
+		result_sets.add(r);
 		printSuccessLog(AM_SMSG.AMS_PROCSTATEMENT);
+		if (!r.next())
+			printSuccessLog(AM_SMSG.AMS_PROCSTATEMENT_EMPTY);
 		return r;
+	}
+	
+	DefaultTableModel makeTableModel(ResultSet rs) throws SQLException {
+		ResultSetMetaData rsmd = rs.getMetaData();
+		DefaultTableModel dtm = new DefaultTableModel();
+		Integer cols = rsmd.getColumnCount();
+		Object[] rowSet;
+		// Columns
+		for (int i = 0; i < cols; i++)
+			dtm.addColumn(rsmd.getColumnLabel(i + 1));
+		// Rows
+		while (rs.next()) {
+			rowSet = new Object[cols];
+			for (int i = 0; i < cols; i++)
+				rowSet[i] = rs.getObject(i + 1);
+			dtm.addRow(rowSet);
+			rowSet = null;
+		}
+		return dtm;
+	}
+	
+	void releaseResultSet(ResultSet rs) throws SQLException {
+		if (result_sets.contains(rs)) {
+			try {
+				rs.close();
+				System.out.printf("[%s] INFO(release): Released ResultSet@%x from memory", CONNECTION_NAME, rs.hashCode());
+				rs = null;
+				result_sets.remove(rs);
+			} catch (SQLException se) {
+				throw new SQLException(String.format("Unable to release ResultSet@%x from memory.", rs.hashCode()));
+			}
+		}
+	}
+	
+	void releaseAllResultSets() throws SQLException {
+		for (ResultSet r : result_sets)
+			releaseResultSet(r);		
 	}
 	
 	private Connection makeConnection(String n, String u, String p) throws SQLException, ClassNotFoundException {
@@ -55,6 +97,9 @@ public class AppModel {
 			case AMS_PROCSTATEMENT:
 				System.out.println("[" + CONNECTION_NAME + "] INFO: Statement executed.");
 				break;
+			case AMS_PROCSTATEMENT_EMPTY:
+				System.out.println("[" + CONNECTION_NAME + "] INFO: Statement executed contains no rows.");
+				break;
 		}
 	}
 	
@@ -68,6 +113,8 @@ public class AppModel {
 				throw new SQLException("MySQL J Connector is malconfigured.");
 		}
 	}
+	
+	private CopyOnWriteArrayList<ResultSet> result_sets = new CopyOnWriteArrayList<>();
 	
 	private final Connection CONNECTION;
 	private final String CONNECTION_NAME;
