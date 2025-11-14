@@ -20,7 +20,7 @@ public class AppModel {
 			return ld.format(DateTimeFormatter.ofPattern(DATE_FORMATTING));
 		}
 		static LocalDate stringToDate(String str) {
-			return str != null ? LocalDate.parse(str, DATE_FORMATTING) : null;
+			return str != null ? LocalDate.parse(str, DateTimeFormatter.ofPattern(DATE_FORMATTING)) : null;
 		}
 		static boolean stringFitsLong(String str) {
 			return str != null && str.length() > 0 && str.length() <= LONG_STRING_LENGTH && str.matches(REGEX_LATIN1);
@@ -36,7 +36,7 @@ public class AppModel {
 		}
 		static boolean dateIsValid(String str) {
 			try {
-				return str != null && LocalDate.parse(str, "yyyy-MM-dd").length() > 0;
+				return str != null && LocalDate.parse(str, DateTimeFormatter.ofPattern(DATE_FORMATTING)) != null;
 			} catch (DateTimeParseException dtpe) {
 				return false;
 			}
@@ -47,8 +47,8 @@ public class AppModel {
 	}
 	
 	static class ClientRecord {
-		static final String TABLE_NAME = 'client_record';
-		static final String PRIVATE_KEY_COLUMN_NAME = 'member_id';
+		static final String TABLE_NAME = "client_record";
+		static final String PRIVATE_KEY_COLUMN_NAME = "member_id";
 		// Returns a string message if there is an error, otherwise returns an empty string.
 		static String createRecord(String first_name, String last_name, String middle_initial,
 			LocalDate birth_date, boolean is_employee, char sex, LocalDate enrollment_date, boolean is_active) throws SQLException {
@@ -58,13 +58,9 @@ public class AppModel {
 				return "Invalid field response: last_name. Make sure it is " + SHORT_STRING_LENGTH + " characters long.";
 			if (!SQLUtils.stringFitsShorter(middle_initial))
 				return "Invalid field response: middle_initial. Make sure it is " + SHORTER_STRING_LENGTH + " characters long.";
-			if (!SQLUtils.dateIsValid(birth_date))
-				return "Invalid field response: birth_date. Make sure it is in " + DATE_FORMATTING + ".";
 			if (!SQLUtils.genderIsValid(Character.toUpperCase(sex)))
 				return "Invalid field response: sex. It can only be either 'M' or 'F'.";
-			if (!SQLUtils.dateIsValid(enrollment_date))
-				return "Invalid field response: enrollment_date. Make sure it is in " + DATE_FORMATTING + ".";
-			processNonQuery(String.format("INSERT INTO `%s` (DEFAULT, '%s', '%s', '%s', '%s', %d, '%c', '%s', %d);",
+			processNonQuery(String.format("INSERT INTO `%s` VALUES (DEFAULT, '%s', '%s', '%s', '%s', %d, '%c', '%s', %d);",
 				TABLE_NAME, first_name.toUpperCase(), last_name.toUpperCase(), middle_initial.toUpperCase(), SQLUtils.toSQLDate(birth_date),
 				(is_employee ? 1 : 0), Character.toUpperCase(sex), SQLUtils.toSQLDate(enrollment_date), (is_active ? 1 : 0))
 			);
@@ -74,7 +70,7 @@ public class AppModel {
 		// being an Object yet to be casted to the respective type during use.
 		static HashMap<String, Object> getRecordById(int id) throws SQLException {
 			HashMap<String, Object> result = null;
-			ResultSet filter;
+			ResultSet filter = null;
 			ResultSetMetaData rsmd;
 			int cols;
 			try {
@@ -86,7 +82,7 @@ public class AppModel {
 					cols = rsmd.getColumnCount();
 					result = new HashMap<>(cols);
 					filter.absolute(1);
-					for (i = 1; i <= cols; i++)
+					for (int i = 1; i <= cols; i++)
 						result.put(rsmd.getColumnName(i), filter.getObject(i));
 				}
 			} catch (SQLException se) {
@@ -130,11 +126,9 @@ public class AppModel {
 			);
 		}
 		static void updateBirthDate(LocalDate birth_date, int id) throws SQLException {
-			if (!SQLUtils.dateIsValid(birth_date))
-				return;
 			processNonQuery(
 				"UPDATE `" + TABLE_NAME + "` " +
-				"SET birth_date = '" + AppModel.toSQLDate(birth_date) + "' " +
+				"SET birth_date = '" + SQLUtils.toSQLDate(birth_date) + "' " +
 				"WHERE " + PRIVATE_KEY_COLUMN_NAME + " = " + id + ";"
 			);
 		}
@@ -155,26 +149,24 @@ public class AppModel {
 			);
 		}
 		static void updateEnrollmentDate(LocalDate enrollment_date, int id) throws SQLException {
-			if (!SQLUtils.dateIsValid(enrollment_date))
-				return;
 			processNonQuery(
 				"UPDATE `" + TABLE_NAME + "` " +
-				"SET enrollment_date = '" + AppModel.toSQLDate(enrollment_date) + "' " +
+				"SET enrollment_date = '" + SQLUtils.toSQLDate(enrollment_date) + "' " +
 				"WHERE " + PRIVATE_KEY_COLUMN_NAME + " = " + id + ";"
 			);
 		}
 		static void updateIsActive(Boolean is_active, int id) throws SQLException {
 			processNonQuery(
 				"UPDATE `" + TABLE_NAME + "` " +
-				"SET is_active = " + (is_employee ? 1 : 0) + " " +
+				"SET is_active = " + (is_active ? 1 : 0) + " " +
 				"WHERE " + PRIVATE_KEY_COLUMN_NAME + " = " + id + ";"
 			);
 		}
 	}
 	
 	static class HospitalRecord {
-		static final String TABLE_NAME = 'hospital_record';
-		static final String PRIVATE_KEY_COLUMN_NAME = 'hospital_id';
+		static final String TABLE_NAME = "hospital_record";
+		static final String PRIVATE_KEY_COLUMN_NAME = "hospital_id";
 		static String createRecord(String hospital_name, String address, String city, int zipcode,
 			int contact_no, String email) throws SQLException {
 			if (!SQLUtils.stringFitsShort(hospital_name))
@@ -192,7 +184,7 @@ public class AppModel {
 		}
 		static HashMap<String, Object> getRecordById(int hospital_id) throws SQLException {
 			HashMap<String, Object> result = null;
-			ResultSet filter;
+			ResultSet filter = null;;
 			ResultSetMetaData rsmd;
 			int cols;
 			try {
@@ -204,7 +196,7 @@ public class AppModel {
 					cols = rsmd.getColumnCount();
 					result = new HashMap<>(cols);
 					filter.absolute(1);
-					for (i = 1; i <= cols; i++)
+					for (int i = 1; i <= cols; i++)
 						result.put(rsmd.getColumnName(i), filter.getObject(i));
 				}
 			} catch (SQLException se) {
@@ -261,7 +253,9 @@ public class AppModel {
 				"WHERE " + PRIVATE_KEY_COLUMN_NAME + " = " + id + ";"
 			);
 		}
-		static void updateEmail(String email. int id) throws SQLException {
+		static void updateEmail(String email, int id) throws SQLException {
+			if (!SQLUtils.emailIsValid(email))
+				return;
 			processNonQuery(
 				"UPDATE `" + TABLE_NAME + "` " +
 				"SET email = '" + email.toLowerCase() + "' " +
@@ -270,9 +264,110 @@ public class AppModel {
 		}
 	}
 	
+	static class CompanyPolicyRecord {
+		static final String TABLE_NAME = "company_policy_record";
+		static final String PRIVATE_KEY_COLUMN_NAME = "plan_id";
+		static String createRecord(String plan_name, String coverage_type, double coverage_limit, double premium_amount,
+			String payment_period, String inclusion) throws SQLException {
+			if (!SQLUtils.stringFitsShort(plan_name))
+				return "Invalid field response: plan_name. Make sure it is " + SHORT_STRING_LENGTH + " characters long.";
+			if (!SQLUtils.stringFitsShort(coverage_type))
+				return "Invalid field response: coverage_type. Make sure it is " + SHORT_STRING_LENGTH + " characters long.";
+			if (!SQLUtils.stringFitsShort(payment_period))
+				return "Invalid field response: payment_period. Make sure it is " + SHORT_STRING_LENGTH + " characters long.";
+			if (!SQLUtils.stringFitsShort(inclusion))
+				return "Invalid field response: inclusion. Make sure it is " + SHORT_STRING_LENGTH + " characters long.";
+			processNonQuery(String.format("INSERT INTO `%s` VALUES (DEFAULT, '%s', '%s', %f, %f, '%s', '%s');",
+				TABLE_NAME, plan_name.toUpperCase(), coverage_type.toUpperCase(), coverage_limit, premium_amount,
+				payment_period.toUpperCase(), inclusion.toUpperCase()
+			));
+			return "";
+		}
+		static HashMap<String, Object> getRecordById(int hospital_id) throws SQLException {
+			HashMap<String, Object> result = null;
+			ResultSet filter = null;;
+			ResultSetMetaData rsmd;
+			int cols;
+			try {
+				filter = processQuery(
+					"SELECT * FROM `" + TABLE_NAME + "` WHERE " + PRIVATE_KEY_COLUMN_NAME + " = " + hospital_id + ";"
+				);
+				if (filter.next()) {
+					rsmd = filter.getMetaData();
+					cols = rsmd.getColumnCount();
+					result = new HashMap<>(cols);
+					filter.absolute(1);
+					for (int i = 1; i <= cols; i++)
+						result.put(rsmd.getColumnName(i), filter.getObject(i));
+				}
+			} catch (SQLException se) {
+				se.printStackTrace();
+			} finally {
+				if (filter != null) {
+					try {
+						releaseResultSet(filter);
+					} catch (SQLException se) {
+						se.printStackTrace();
+					}
+				}
+			}
+			return result;
+		}
+		static void updatePlanName(String plan_name, int id) throws SQLException {
+			if (!SQLUtils.stringFitsShort(plan_name))
+				return;
+			processNonQuery(
+				"UPDATE `" + TABLE_NAME + "` " +
+				"SET plan_name = '" + plan_name.toUpperCase() + "' " +
+				"WHERE " + PRIVATE_KEY_COLUMN_NAME + " = " + id + ";"
+			);
+		}
+		static void updateCoverageType(String coverage_type, int id) throws SQLException {
+			if (!SQLUtils.stringFitsShort(coverage_type))
+				return;
+			processNonQuery(
+				"UPDATE `" + TABLE_NAME + "` " +
+				"SET coverage_type = '" + coverage_type.toUpperCase() + "' " +
+				"WHERE " + PRIVATE_KEY_COLUMN_NAME + " = " + id + ";"
+			);
+		}
+		static void updateCoverageLimit(float coverage_limit, int id) throws SQLException {
+			processNonQuery(
+				"UPDATE `" + TABLE_NAME + "` " +
+				"SET coverage_limit = " + coverage_limit + " " +
+				"WHERE " + PRIVATE_KEY_COLUMN_NAME + " = " + id + ";"
+			);
+		}
+		static void updatePremiumAmount(float premium_amount, int id) throws SQLException {
+			processNonQuery(
+				"UPDATE `" + TABLE_NAME + "` " +
+				"SET premium_amount = " + premium_amount + " " +
+				"WHERE " + PRIVATE_KEY_COLUMN_NAME + " = " + id + ";"
+			);
+		}
+		static void updatePaymentPeriod(String payment_period, int id) throws SQLException {
+			if (!SQLUtils.stringFitsShort(payment_period))
+				return;
+			processNonQuery(
+				"UPDATE `" + TABLE_NAME + "` " +
+				"SET payment_period = '" + payment_period.toUpperCase() + "' " +
+				"WHERE " + PRIVATE_KEY_COLUMN_NAME + " = " + id + ";"
+			);
+		}
+		static void updateInclusion(String inclusion, int id) throws SQLException {
+			if (!SQLUtils.stringFitsShort(inclusion))
+				return;
+			processNonQuery(
+				"UPDATE `" + TABLE_NAME + "` " +
+				"SET inclusion = '" + inclusion.toUpperCase() + "' " +
+				"WHERE " + PRIVATE_KEY_COLUMN_NAME + " = " + id + ";"
+			);
+		}
+	}
+	
 	static class DoctorRecord {
-		static final String TABLE_NAME = 'doctor_record';
-		static final String PRIVATE_KEY_COLUMN_NAME = 'doctor_id';
+		static final String TABLE_NAME = "doctor_record";
+		static final String PRIVATE_KEY_COLUMN_NAME = "doctor_id";
 		static String createRecord(String first_name, String last_name, String middle_initial, String doctor_type,
 			int contact_no, String email) throws SQLException {
 			if (!SQLUtils.stringFitsShort(first_name))
@@ -293,7 +388,7 @@ public class AppModel {
 		}
 		static HashMap<String, Object> getRecordById(int hospital_id) throws SQLException {
 			HashMap<String, Object> result = null;
-			ResultSet filter;
+			ResultSet filter = null;;
 			ResultSetMetaData rsmd;
 			int cols;
 			try {
@@ -305,7 +400,7 @@ public class AppModel {
 					cols = rsmd.getColumnCount();
 					result = new HashMap<>(cols);
 					filter.absolute(1);
-					for (i = 1; i <= cols; i++)
+					for (int i = 1; i <= cols; i++)
 						result.put(rsmd.getColumnName(i), filter.getObject(i));
 				}
 			} catch (SQLException se) {
@@ -364,7 +459,9 @@ public class AppModel {
 				"WHERE " + PRIVATE_KEY_COLUMN_NAME + " = " + id + ";"
 			);
 		}
-		static void updateEmail(String email. int id) throws SQLException {
+		static void updateEmail(String email, int id) throws SQLException {
+			if (!SQLUtils.emailIsValid(email))
+				return;
 			processNonQuery(
 				"UPDATE `" + TABLE_NAME + "` " +
 				"SET email = '" + email.toLowerCase() + "' " +
@@ -374,7 +471,7 @@ public class AppModel {
 	}
 	
 	// For SELECT
-	ResultSet processQuery(String query) throws SQLException {
+	static ResultSet processQuery(String query) throws SQLException {
 		Statement s = null;
 		ResultSet r = null;
 		if (null == modelConnection)
@@ -418,7 +515,7 @@ public class AppModel {
 		return r;
 	}
 	
-	DefaultTableModel makeTableModel(ResultSet rs, boolean releaseOnReturn) throws SQLException {
+	static DefaultTableModel makeTableModel(ResultSet rs, boolean releaseOnReturn) throws SQLException {
 		if (null == rs)
 			throw new NullPointerException("rs is null");
 		ResultSetMetaData rsmd = null;
@@ -457,7 +554,7 @@ public class AppModel {
 		return dtm;
 	}
 	
-	DefaultTableModel makeTableFromStatement(String query) throws SQLException {
+	static DefaultTableModel makeTableFromStatement(String query) throws SQLException {
 		ResultSet proc = null;
 		Integer procHash;
 		DefaultTableModel dtm = null;
@@ -476,7 +573,7 @@ public class AppModel {
 		return dtm;
 	}
 
-	void releaseResultSet(ResultSet rs) throws SQLException {
+	static void releaseResultSet(ResultSet rs) throws SQLException {
 		if (open_queries.get(rs) != null) {
 			try {
 				rs.close();
@@ -491,7 +588,7 @@ public class AppModel {
 		}
 	}
 	
-	void releaseAllResultSets() throws SQLException {
+	static void releaseAllResultSets() throws SQLException {
 		for (Map.Entry<ResultSet, Statement> e : open_queries.entrySet()) {
 			try {
 				releaseResultSet(e.getKey());
@@ -502,7 +599,7 @@ public class AppModel {
 		}
 	}
 	
-	private void enterDatabase() throws SQLException, ClassNotFoundException {
+	private static void enterDatabase() throws SQLException, ClassNotFoundException {
 		try {
 			Class.forName("com.mysql.cj.jdbc.Driver");
 			modelConnection = DriverManager.getConnection(JDBC_MAIN_ADDRESS, MYSQL_USERNAME, MYSQL_PASSWORD);
@@ -618,5 +715,5 @@ public class AppModel {
 	static final int CHAR_LENGTH = 1;
 	static final String DATE_FORMATTING = "yyyy-MM-dd";
 	static final String REGEX_LATIN1 = "\\A[\\u0000-\\u00FF]*\\z";
-	static final String REGEX_EMAIL = "^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$"
+	static final String REGEX_EMAIL = "^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$";
 }
