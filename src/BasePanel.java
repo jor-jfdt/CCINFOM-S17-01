@@ -68,6 +68,8 @@ public abstract class BasePanel extends JPanel {
     protected void update() {
         updateFont();
         updateComponent();
+        leftPanel.revalidate();
+        leftPanel.repaint();
     }
 
     public void updateFont() {

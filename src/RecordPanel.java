@@ -49,5 +49,7 @@ public class RecordPanel extends BasePanel {
                 option.setAlignmentX(Component.CENTER_ALIGNMENT);
             }
         }
+        leftPanel.revalidate();
+        leftPanel.repaint();
     }
 }

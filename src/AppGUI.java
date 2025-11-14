@@ -1,10 +1,11 @@
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.ComponentAdapter;
+import java.awt.event.ComponentEvent;
 
 public class AppGUI extends JFrame {
     public AppGUI(String title) {
         super(title);
-        this.setPreferredSize(new Dimension(screenWidth, screenHeight));
         this.setDefaultCloseOperation(EXIT_ON_CLOSE);
 
         cardContainer = new JPanel(new CardLayout());
@@ -12,11 +13,40 @@ public class AppGUI extends JFrame {
         this.setMinimumSize(new Dimension(640, 360));
         this.setMaximumSize(new Dimension(1920, 1080));
 
-        updateScreenDimensions(this.getWidth(), this.getHeight());
+        this.addComponentListener(new ComponentAdapter() {
+            private boolean isResizing = false;
+
+            @Override
+            public void componentResized(ComponentEvent e) {
+                if (isResizing) return;
+
+                isResizing = true;
+
+                Insets insets = getInsets();
+                int contentWidth = getWidth() - insets.left - insets.right;
+                int contentHeight = getHeight() - insets.top - insets.bottom;
+
+                int newContentHeight = (int) (contentWidth / ASPECT_RATIO);
+
+                if (Math.abs(newContentHeight - contentHeight) > 5) {
+                    int newFrameHeight = newContentHeight + insets.top + insets.bottom;
+                    setSize(getWidth(), newFrameHeight);
+                }
+
+                int finalContentWidth = getWidth() - getInsets().left - getInsets().right;
+                int finalContentHeight = getHeight() - getInsets().top - getInsets().bottom;
+                updateScreenDimensions(finalContentWidth, finalContentHeight);
+                update();
+
+                isResizing = false;
+            }
+        });
 
         initializePanels();
         showPanel("main");
 
+        this.setPreferredSize(new Dimension(screenWidth, screenHeight));
+        this.pack();
         this.setLocationRelativeTo(null);
         this.setVisible(true);
     }
@@ -72,7 +102,7 @@ public class AppGUI extends JFrame {
         switch (panelType.toLowerCase()) {
             case "main":
                 cardLayout.show(cardContainer, "main");
-                currentPanel = "main";
+                String currentPanel = "main";
                 break;
             case "record":
                 cardLayout.show(cardContainer, "record");
@@ -118,7 +148,6 @@ public class AppGUI extends JFrame {
     private JPanel mainPanel;
     private RecordPanel recordPanel;
     private JButton[] menuButtons;
-    private String currentPanel = "main";
 
     public static final double ASPECT_RATIO = 16.0 / 9.0;
     public static int screenWidth = 1280;
