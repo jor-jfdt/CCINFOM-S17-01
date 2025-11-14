@@ -1,103 +1,374 @@
 import java.sql.*;
 import java.util.*;
 import java.time.*;
-import java.time.format.DateTimeFormatter;
+import java.time.format.*;
 import javax.swing.table.DefaultTableModel;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ConcurrentHashMap;
 public class AppModel {
 	// MySQL port
-	public static final String JDBC_MAIN_ADDRESS = "jdbc:mysql://localhost:3306/";
-	public static enum AM_SMSG { AMS_MAKECONNECTION, AMS_PROCSTATEMENT, AMS_PROCSTATEMENT_EMPTY }
-	public static enum AM_EMSG { AME_MAKECONNECTION, AME_PROCSTATEMENT, AME_JCONNECTOR }
+	static final String JDBC_MAIN_ADDRESS = "jdbc:mysql://localhost:3306/";
+	static enum AM_SMSG { AMS_MAKECONNECTION, AMS_PROCSTATEMENT, AMS_PROCSTATEMENT_EMPTY }
+	static enum AM_EMSG { AME_MAKECONNECTION, AME_PROCSTATEMENT, AME_JCONNECTOR }
 	
 	AppModel() throws SQLException, ClassNotFoundException {
 		enterDatabase();
 	}
 	
-	static String toSQLDate(LocalDate ld) {
-		return ld.format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
+	static class SQLUtils {
+		static String toSQLDate(LocalDate ld) {
+			return ld.format(DateTimeFormatter.ofPattern(DATE_FORMATTING));
+		}
+		static LocalDate stringToDate(String str) {
+			return str != null ? LocalDate.parse(str, DATE_FORMATTING) : null;
+		}
+		static boolean stringFitsLong(String str) {
+			return str != null && str.length() > 0 && str.length() <= LONG_STRING_LENGTH && str.matches(REGEX_LATIN1);
+		}
+		static boolean stringFitsShort(String str) {
+			return str != null && str.length() > 0 && str.length() <= SHORT_STRING_LENGTH && str.matches(REGEX_LATIN1);
+		}
+		static boolean stringFitsShorter(String str) {
+			return str != null && str.length() > 0 && str.length() <= SHORTER_STRING_LENGTH && str.matches(REGEX_LATIN1);
+		}
+		static boolean emailIsValid(String str) {
+			return str != null && stringFitsLong(str) && str.matches(REGEX_EMAIL);
+		}
+		static boolean dateIsValid(String str) {
+			try {
+				return str != null && LocalDate.parse(str, "yyyy-MM-dd").length() > 0;
+			} catch (DateTimeParseException dtpe) {
+				return false;
+			}
+		}
+		static boolean genderIsValid(char c) {
+			return c == 'M' || c == 'F';
+		}
 	}
 	
 	static class ClientRecord {
-		static void createRecord(String first_name, String last_name, String middle_initial,
-			LocalDate birth_date, Boolean is_employee, Character sex, LocalDate enrollment_date, Boolean is_active) throws SQLException {
-			//System.out.println(AppModel.toSQLDate(birth_date));
-			processNonQuery(
-				"INSERT INTO client_record " + //INSERT INTO client_record
-				"VALUES (DEFAULT, '"
-				+ first_name.toUpperCase() + "', '"
-				+ last_name.toUpperCase() + "', ' "
-				+ middle_initial.toUpperCase() + "', '"
-				+ AppModel.toSQLDate(birth_date) + "', '"
-				+ (is_employee ? 1 : 0) + "', '"
-				+ Character.toUpperCase(sex) + "', '"
-				+ AppModel.toSQLDate(enrollment_date) + "', '" +
-				(is_active ? 1 : 0) +"');" // VALUES (DEFAULT, '$first_name', '$last_name', '$middle_initial', '$birth_date', '$is_employee', '$sex', '$is_active');
+		static final String TABLE_NAME = 'client_record';
+		static final String PRIVATE_KEY_COLUMN_NAME = 'member_id';
+		// Returns a string message if there is an error, otherwise returns an empty string.
+		static String createRecord(String first_name, String last_name, String middle_initial,
+			LocalDate birth_date, boolean is_employee, char sex, LocalDate enrollment_date, boolean is_active) throws SQLException {
+			if (!SQLUtils.stringFitsShort(first_name))
+				return "Invalid field response: first_name. Make sure it is " + SHORT_STRING_LENGTH + " characters long.";
+			if (!SQLUtils.stringFitsShort(last_name))
+				return "Invalid field response: last_name. Make sure it is " + SHORT_STRING_LENGTH + " characters long.";
+			if (!SQLUtils.stringFitsShorter(middle_initial))
+				return "Invalid field response: middle_initial. Make sure it is " + SHORTER_STRING_LENGTH + " characters long.";
+			if (!SQLUtils.dateIsValid(birth_date))
+				return "Invalid field response: birth_date. Make sure it is in " + DATE_FORMATTING + ".";
+			if (!SQLUtils.genderIsValid(Character.toUpperCase(sex)))
+				return "Invalid field response: sex. It can only be either 'M' or 'F'.";
+			if (!SQLUtils.dateIsValid(enrollment_date))
+				return "Invalid field response: enrollment_date. Make sure it is in " + DATE_FORMATTING + ".";
+			processNonQuery(String.format("INSERT INTO `%s` (DEFAULT, '%s', '%s', '%s', '%s', %d, '%c', '%s', %d);",
+				TABLE_NAME, first_name.toUpperCase(), last_name.toUpperCase(), middle_initial.toUpperCase(), SQLUtils.toSQLDate(birth_date),
+				(is_employee ? 1 : 0), Character.toUpperCase(sex), SQLUtils.toSQLDate(enrollment_date), (is_active ? 1 : 0))
 			);
+			return "";
 		}
-		
-		static void updateFirstName(String first_name, int member_id) throws SQLException {
+		// Returns a HashMap with the key being the column name, and the value
+		// being an Object yet to be casted to the respective type during use.
+		static HashMap<String, Object> getRecordById(int id) throws SQLException {
+			HashMap<String, Object> result = null;
+			ResultSet filter;
+			ResultSetMetaData rsmd;
+			int cols;
+			try {
+				filter = processQuery(
+					"SELECT * FROM `" + TABLE_NAME + "` WHERE " + PRIVATE_KEY_COLUMN_NAME + " = " + id + ";"
+				);
+				if (filter.next()) {
+					rsmd = filter.getMetaData();
+					cols = rsmd.getColumnCount();
+					result = new HashMap<>(cols);
+					filter.absolute(1);
+					for (i = 1; i <= cols; i++)
+						result.put(rsmd.getColumnName(i), filter.getObject(i));
+				}
+			} catch (SQLException se) {
+				se.printStackTrace();
+			} finally {
+				if (filter != null) {
+					try {
+						releaseResultSet(filter);
+					} catch (SQLException se) {
+						se.printStackTrace();
+					}
+				}
+			}
+			return result;
+		}
+		static void updateFirstName(String first_name, int id) throws SQLException {
+			if (!SQLUtils.stringFitsShort(first_name))
+				return;
 			processNonQuery(
-				"UPDATE client_record " +
+				"UPDATE `" + TABLE_NAME + "` " +
 				"SET first_name = '" + first_name.toUpperCase() + "' " +
-				"WHERE member_id = " + member_id + ";"
+				"WHERE " + PRIVATE_KEY_COLUMN_NAME + " = " + id + ";"
 			);
 		}
-		
-		static void updateLastName(String last_name, int member_id) throws SQLException {
+		static void updateLastName(String last_name, int id) throws SQLException {
+			if (!SQLUtils.stringFitsShort(last_name))
+				return;
 			processNonQuery(
-				"UPDATE client_record " +
+				"UPDATE `" + TABLE_NAME + "` " +
 				"SET last_name = '" + last_name.toUpperCase() + "' " +
-				"WHERE member_id = " + member_id + ";"
+				"WHERE " + PRIVATE_KEY_COLUMN_NAME + " = " + id + ";"
 			);
 		}
-		
-		static void updateMiddleInitial(String middle_initial, int member_id) throws SQLException {
+		static void updateMiddleInitial(String middle_initial, int id) throws SQLException {
+			if (!SQLUtils.stringFitsShorter(middle_initial))
+				return;
 			processNonQuery(
-				"UPDATE client_record " +
+				"UPDATE `" + TABLE_NAME + "` " +
 				"SET middle_initial = '" + middle_initial.toUpperCase() + "' " +
-				"WHERE member_id = " + member_id + ";"
+				"WHERE " + PRIVATE_KEY_COLUMN_NAME + " = " + id + ";"
 			);
 		}
-		
-		static void updateBirthDate(LocalDate birth_date, int member_id) throws SQLException {
+		static void updateBirthDate(LocalDate birth_date, int id) throws SQLException {
+			if (!SQLUtils.dateIsValid(birth_date))
+				return;
 			processNonQuery(
-				"UPDATE client_record " +
+				"UPDATE `" + TABLE_NAME + "` " +
 				"SET birth_date = '" + AppModel.toSQLDate(birth_date) + "' " +
-				"WHERE member_id = " + member_id + ";"
+				"WHERE " + PRIVATE_KEY_COLUMN_NAME + " = " + id + ";"
 			);
 		}
-		
-		static void updateIsEmployee(Boolean is_employee, int member_id) throws SQLException {
+		static void updateIsEmployee(Boolean is_employee, int id) throws SQLException {
 			processNonQuery(
-				"UPDATE client_record " +
-				"SET is_employee = '" + is_employee + "' " +
-				"WHERE member_id = " + member_id + ";"
+				"UPDATE `" + TABLE_NAME + "` " +
+				"SET is_employee = " + (is_employee ? 1 : 0) + " " +
+				"WHERE " + PRIVATE_KEY_COLUMN_NAME + " = " + id + ";"
 			);
 		}
-		
-		static void updateSex(Character sex, int member_id) throws SQLException {
+		static void updateSex(Character sex, int id) throws SQLException {
+			if (!SQLUtils.genderIsValid(sex))
+				return;
 			processNonQuery(
-				"UPDATE client_record " + 
+				"UPDATE `" + TABLE_NAME + "` " + 
 				"SET sex = '" + Character.toUpperCase(sex) + "' " +
-				"WHERE member_id = " + member_id + ";"
+				"WHERE " + PRIVATE_KEY_COLUMN_NAME + " = " + id + ";"
 			);
 		}
-		
-		static void updateEnrollmentDate(LocalDate enrollment_date, int member_id) throws SQLException {
+		static void updateEnrollmentDate(LocalDate enrollment_date, int id) throws SQLException {
+			if (!SQLUtils.dateIsValid(enrollment_date))
+				return;
 			processNonQuery(
-				"UPDATE client_record " +
+				"UPDATE `" + TABLE_NAME + "` " +
 				"SET enrollment_date = '" + AppModel.toSQLDate(enrollment_date) + "' " +
-				"WHERE member_id = " + member_id + ";"
+				"WHERE " + PRIVATE_KEY_COLUMN_NAME + " = " + id + ";"
 			);
 		}
-		
-		static void updateIsActive(Boolean is_active, int member_id) throws SQLException {
+		static void updateIsActive(Boolean is_active, int id) throws SQLException {
 			processNonQuery(
-				"UPDATE client_record " +
-				"SET is_active = '" + is_active + "' " +
-				"WHERE member_id = " + member_id + ";"
+				"UPDATE `" + TABLE_NAME + "` " +
+				"SET is_active = " + (is_employee ? 1 : 0) + " " +
+				"WHERE " + PRIVATE_KEY_COLUMN_NAME + " = " + id + ";"
+			);
+		}
+	}
+	
+	static class HospitalRecord {
+		static final String TABLE_NAME = 'hospital_record';
+		static final String PRIVATE_KEY_COLUMN_NAME = 'hospital_id';
+		static String createRecord(String hospital_name, String address, String city, int zipcode,
+			int contact_no, String email) throws SQLException {
+			if (!SQLUtils.stringFitsShort(hospital_name))
+				return "Invalid field response: hospital_name. Make sure it is " + SHORT_STRING_LENGTH + " characters long.";
+			if (!SQLUtils.stringFitsLong(address))
+				return "Invalid field response: address. Make sure it is " + LONG_STRING_LENGTH + " characters long.";
+			if (!SQLUtils.stringFitsShort(city))
+				return "Invalid field response: city. Make sure it is " + SHORT_STRING_LENGTH + " characters long.";
+			if (!SQLUtils.emailIsValid(email))
+				return "Invalid field response: email. Make sure it is a valid email address.";
+			processNonQuery(String.format("INSERT INTO `%s` VALUES (DEFAULT, '%s', '%s', '%s', %d, %d, '%s');",
+				TABLE_NAME, hospital_name.toUpperCase(), address.toUpperCase(), city.toUpperCase(), zipcode, contact_no, email.toLowerCase()
+			));
+			return "";
+		}
+		static HashMap<String, Object> getRecordById(int hospital_id) throws SQLException {
+			HashMap<String, Object> result = null;
+			ResultSet filter;
+			ResultSetMetaData rsmd;
+			int cols;
+			try {
+				filter = processQuery(
+					"SELECT * FROM `" + TABLE_NAME + "` WHERE " + PRIVATE_KEY_COLUMN_NAME + " = " + hospital_id + ";"
+				);
+				if (filter.next()) {
+					rsmd = filter.getMetaData();
+					cols = rsmd.getColumnCount();
+					result = new HashMap<>(cols);
+					filter.absolute(1);
+					for (i = 1; i <= cols; i++)
+						result.put(rsmd.getColumnName(i), filter.getObject(i));
+				}
+			} catch (SQLException se) {
+				se.printStackTrace();
+			} finally {
+				if (filter != null) {
+					try {
+						releaseResultSet(filter);
+					} catch (SQLException se) {
+						se.printStackTrace();
+					}
+				}
+			}
+			return result;
+		}
+		static void updateHospitalName(String hospital_name, int id) throws SQLException {
+			if (!SQLUtils.stringFitsShort(hospital_name))
+				return;
+			processNonQuery(
+				"UPDATE `" + TABLE_NAME + "` " +
+				"SET hospital_name = '" + hospital_name.toUpperCase() + "' " +
+				"WHERE " + PRIVATE_KEY_COLUMN_NAME + " = " + id + ";"
+			);
+		}
+		static void updateAddress(String address, int id) throws SQLException {
+			if (!SQLUtils.stringFitsLong(address))
+				return;
+			processNonQuery(
+				"UPDATE `" + TABLE_NAME + "` " +
+				"SET address = '" + address.toUpperCase() + "' " +
+				"WHERE " + PRIVATE_KEY_COLUMN_NAME + " = " + id + ";"
+			);
+		}
+		static void updateCity(String city, int id) throws SQLException {
+			if (!SQLUtils.stringFitsShort(city))
+				return;
+			processNonQuery(
+				"UPDATE `" + TABLE_NAME + "` " +
+				"SET city = '" + city.toUpperCase() + "' " +
+				"WHERE " + PRIVATE_KEY_COLUMN_NAME + " = " + id + ";"
+			);
+		}
+		static void updateZipcode(int zipcode, int id) throws SQLException {
+			processNonQuery(
+				"UPDATE `" + TABLE_NAME + "` " +
+				"SET zipcode = " + zipcode + " " +
+				"WHERE " + PRIVATE_KEY_COLUMN_NAME + " = " + id + ";"
+			);
+		}
+		static void updateContactNo(int contact_no, int id) throws SQLException {
+			processNonQuery(
+				"UPDATE `" + TABLE_NAME + "` " +
+				"SET contact_no = " + contact_no + " " +
+				"WHERE " + PRIVATE_KEY_COLUMN_NAME + " = " + id + ";"
+			);
+		}
+		static void updateEmail(String email. int id) throws SQLException {
+			processNonQuery(
+				"UPDATE `" + TABLE_NAME + "` " +
+				"SET email = '" + email.toLowerCase() + "' " +
+				"WHERE " + PRIVATE_KEY_COLUMN_NAME + " = " + id + ";"
+			);
+		}
+	}
+	
+	static class DoctorRecord {
+		static final String TABLE_NAME = 'doctor_record';
+		static final String PRIVATE_KEY_COLUMN_NAME = 'doctor_id';
+		static String createRecord(String first_name, String last_name, String middle_initial, String doctor_type,
+			int contact_no, String email) throws SQLException {
+			if (!SQLUtils.stringFitsShort(first_name))
+				return "Invalid field response: first_name. Make sure it is " + SHORT_STRING_LENGTH + " characters long.";
+			if (!SQLUtils.stringFitsShort(last_name))
+				return "Invalid field response: last_name. Make sure it is " + SHORT_STRING_LENGTH + " characters long.";
+			if (!SQLUtils.stringFitsShorter(middle_initial))
+				return "Invalid field response: middle_initial. Make sure it is " + SHORTER_STRING_LENGTH + " characters long.";
+			if (!SQLUtils.stringFitsShorter(doctor_type))
+				return "Invalid field response: doctor_type. Make sure it is " + SHORTER_STRING_LENGTH + " characters long.";
+			if (!SQLUtils.emailIsValid(email))
+				return "Invalid field response: email. Make sure it is a valid email address.";
+			processNonQuery(String.format("INSERT INTO `%s` VALUES (DEFAULT, '%s', '%s', '%s', '%s', %d, '%s');",
+				TABLE_NAME, first_name.toUpperCase(), last_name.toUpperCase(), middle_initial.toUpperCase(), doctor_type.toUpperCase(),
+				contact_no, email.toLowerCase()
+			));
+			return "";
+		}
+		static HashMap<String, Object> getRecordById(int hospital_id) throws SQLException {
+			HashMap<String, Object> result = null;
+			ResultSet filter;
+			ResultSetMetaData rsmd;
+			int cols;
+			try {
+				filter = processQuery(
+					"SELECT * FROM `" + TABLE_NAME + "` WHERE " + PRIVATE_KEY_COLUMN_NAME + " = " + hospital_id + ";"
+				);
+				if (filter.next()) {
+					rsmd = filter.getMetaData();
+					cols = rsmd.getColumnCount();
+					result = new HashMap<>(cols);
+					filter.absolute(1);
+					for (i = 1; i <= cols; i++)
+						result.put(rsmd.getColumnName(i), filter.getObject(i));
+				}
+			} catch (SQLException se) {
+				se.printStackTrace();
+			} finally {
+				if (filter != null) {
+					try {
+						releaseResultSet(filter);
+					} catch (SQLException se) {
+						se.printStackTrace();
+					}
+				}
+			}
+			return result;
+		}
+		static void updateFirstName(String first_name, int id) throws SQLException {
+			if (!SQLUtils.stringFitsShort(first_name))
+				return;
+			processNonQuery(
+				"UPDATE `" + TABLE_NAME + "` " +
+				"SET first_name = '" + first_name.toUpperCase() + "' " +
+				"WHERE " + PRIVATE_KEY_COLUMN_NAME + " = " + id + ";"
+			);
+		}
+		static void updateLastName(String last_name, int id) throws SQLException {
+			if (!SQLUtils.stringFitsShort(last_name))
+				return;
+			processNonQuery(
+				"UPDATE `" + TABLE_NAME + "` " +
+				"SET last_name = '" + last_name.toUpperCase() + "' " +
+				"WHERE " + PRIVATE_KEY_COLUMN_NAME + " = " + id + ";"
+			);
+		}
+		static void updateMiddleInitial(String middle_initial, int id) throws SQLException {
+			if (!SQLUtils.stringFitsShorter(middle_initial))
+				return;
+			processNonQuery(
+				"UPDATE `" + TABLE_NAME + "` " +
+				"SET middle_initial = '" + middle_initial.toUpperCase() + "' " +
+				"WHERE " + PRIVATE_KEY_COLUMN_NAME + " = " + id + ";"
+			);
+		}
+		static void updateDoctorType(String doctor_type, int id) throws SQLException {
+			if (!SQLUtils.stringFitsShort(doctor_type))
+				return;
+			processNonQuery(
+				"UPDATE `" + TABLE_NAME + "` " +
+				"SET doctor_type = '" + doctor_type.toUpperCase() + "' " +
+				"WHERE " + PRIVATE_KEY_COLUMN_NAME + " = " + id + ";"
+			);
+		}
+		static void updateContactNo(int contact_no, int id) throws SQLException {
+			processNonQuery(
+				"UPDATE `" + TABLE_NAME + "` " +
+				"SET contact_no = " + contact_no + " " +
+				"WHERE " + PRIVATE_KEY_COLUMN_NAME + " = " + id + ";"
+			);
+		}
+		static void updateEmail(String email. int id) throws SQLException {
+			processNonQuery(
+				"UPDATE `" + TABLE_NAME + "` " +
+				"SET email = '" + email.toLowerCase() + "' " +
+				"WHERE " + PRIVATE_KEY_COLUMN_NAME + " = " + id + ";"
 			);
 		}
 	}
@@ -239,24 +510,24 @@ public class AppModel {
 			processNonQuery("USE `" + DATABASE_NAME + "`;");
 			processNonQuery("CREATE TABLE IF NOT EXISTS `client_record` (" +
 				"member_id INT PRIMARY KEY AUTO_INCREMENT, " +
-				"first_name VARCHAR(50), " +
-				"last_name VARCHAR(50), " +
-				"middle_initial VARCHAR(10), " +
+				"first_name VARCHAR(" + SHORT_STRING_LENGTH + "), " +
+				"last_name VARCHAR(" + SHORT_STRING_LENGTH + "), " +
+				"middle_initial VARCHAR(" + SHORTER_STRING_LENGTH + "), " +
 				"birth_date DATE, " +
 				"is_employee BOOLEAN, " +
-				"sex VARCHAR(1), " +
+				"sex VARCHAR(" + CHAR_LENGTH + "), " +
 				"enrollment_date DATE, " +
 				"is_active BOOLEAN" +
 				");"
 			);
 			processNonQuery("CREATE TABLE IF NOT EXISTS `treatment_summary` (" +
 				"treatment_id INT PRIMARY KEY AUTO_INCREMENT, " +
-				"treatment_details VARCHAR(100)" +
+				"treatment_details VARCHAR(" + LONG_STRING_LENGTH + ")" +
 				");"
 			);
 			processNonQuery("CREATE TABLE IF NOT EXISTS `illness` (" +
 				"illness_id INT PRIMARY KEY AUTO_INCREMENT, " +
-				"illness_name VARCHAR(50), " +
+				"illness_name VARCHAR(" + SHORT_STRING_LENGTH + "), " +
 				"icd10_code INT" +
 				");"
 			);
@@ -270,32 +541,32 @@ public class AppModel {
 			);
 			processNonQuery("CREATE TABLE IF NOT EXISTS `company_policy_record` (" +
 				"plan_id INT PRIMARY KEY AUTO_INCREMENT, " +
-				"plan_name VARCHAR(50), " +
-				"coverage_type VARCHAR(50), " +
+				"plan_name VARCHAR(" + SHORT_STRING_LENGTH + "), " +
+				"coverage_type VARCHAR(" + SHORT_STRING_LENGTH + "), " +
 				"coverage_limit FLOAT, " +
 				"premium_amount FLOAT, " +
-				"payment_period VARCHAR(50), " +
-				"inclusion VARCHAR(50)" +
+				"payment_period VARCHAR(" + SHORT_STRING_LENGTH + "), " +
+				"inclusion VARCHAR(" + SHORT_STRING_LENGTH + ")" +
 				");"
 			);
 			processNonQuery("CREATE TABLE IF NOT EXISTS `hospital_record` (" +
 				"hospital_id INT PRIMARY KEY AUTO_INCREMENT, " +
-				"hospital_name VARCHAR(50), " +
-				"address VARCHAR(50), " +
-				"city VARCHAR(50), " +
+				"hospital_name VARCHAR(" + SHORT_STRING_LENGTH + "), " +
+				"address VARCHAR(" + SHORT_STRING_LENGTH + "), " +
+				"city VARCHAR(" + SHORT_STRING_LENGTH + "), " +
 				"zipcode INT, " +
 				"contact_no INT, " +
-				"email VARCHAR(50)" +
+				"email VARCHAR(" + LONG_STRING_LENGTH + ")" +
 				");"
 			);
 			processNonQuery("CREATE TABLE IF NOT EXISTS `doctor_record` (" +
 				"doctor_id INT PRIMARY KEY AUTO_INCREMENT, " +
-				"first_name VARCHAR(50), " +
-				"last_name VARCHAR(50), " +
-				"middle_initial VARCHAR(10), " +
-				"doctor_type VARCHAR(50), " +
+				"first_name VARCHAR(" + SHORT_STRING_LENGTH + "), " +
+				"last_name VARCHAR(" + SHORT_STRING_LENGTH + "), " +
+				"middle_initial VARCHAR(" + SHORTER_STRING_LENGTH + "), " +
+				"doctor_type VARCHAR(" + SHORT_STRING_LENGTH + "), " +
 				"contact_no INT, " +
-				"email VARCHAR(50)" +
+				"email VARCHAR(" + LONG_STRING_LENGTH + ")" +
 				");"
 			);
 			printSuccessLog(AM_SMSG.AMS_MAKECONNECTION);
@@ -340,4 +611,12 @@ public class AppModel {
 	private static final String DATABASE_ADDRESS = JDBC_MAIN_ADDRESS + "/" + DATABASE_NAME;
 	private static final String MYSQL_USERNAME = "root";
 	private static final String MYSQL_PASSWORD = "hajtubtyacty1Bgmail.com";
+	
+	static final int LONG_STRING_LENGTH = 254;
+	static final int SHORT_STRING_LENGTH = 127;
+	static final int SHORTER_STRING_LENGTH = 15;
+	static final int CHAR_LENGTH = 1;
+	static final String DATE_FORMATTING = "yyyy-MM-dd";
+	static final String REGEX_LATIN1 = "\\A[\\u0000-\\u00FF]*\\z";
+	static final String REGEX_EMAIL = "^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$"
 }
