@@ -74,13 +74,20 @@ public class RecordPanel extends BasePanel {
             Font buttonFont = UITools.getLeftPanelButtonFont();
 
             for (JButton option : options) {
-                option.setPreferredSize(buttonSize);
-                option.setMaximumSize(buttonSize);
-                option.setMinimumSize(buttonSize);
                 option.setFont(buttonFont);
-                option.setAlignmentX(Component.CENTER_ALIGNMENT);
+                Dimension prefSize = new Dimension(100, buttonSize.height);
+                option.setPreferredSize(prefSize);
             }
         }
+
+        if (hideButton != null) {
+            Dimension hideButtonSize = UITools.getHideButtonSize();
+            hideButton.setPreferredSize(hideButtonSize);
+            hideButton.setMinimumSize(hideButtonSize);
+            hideButton.setMaximumSize(hideButtonSize);
+            hideButton.setFont(new Font("Arial Unicode MS", Font.PLAIN, 16));
+        }
+
         leftPanel.revalidate();
         leftPanel.repaint();
     }

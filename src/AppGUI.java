@@ -14,7 +14,7 @@ public class AppGUI extends JFrame {
 
         cardContainer = new JPanel(new CardLayout());
 
-        this.setMinimumSize(new Dimension(640, 360));
+        this.setMinimumSize(new Dimension(1280, 720));
         this.setMaximumSize(new Dimension(1920, 1080));
 
         this.addComponentListener(new ComponentAdapter() {

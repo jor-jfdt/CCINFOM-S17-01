@@ -45,8 +45,10 @@ public class UITools {
     }
 
     public static void styleButton(JButton button) {
-        button.setBackground(Color.LIGHT_GRAY);
-        button.setForeground(PRIMARY_COLOR);
+        button.setBackground(PRIMARY_COLOR);
+        button.setForeground(Color.WHITE);
         button.setFont(new Font("Tahoma", Font.BOLD, 13));
+        button.setFocusPainted(false);
+        button.setBorderPainted(true);
     }
 }

@@ -37,9 +37,9 @@ public abstract class BasePanel extends BackgroundPanel {
 
     private void addLeftPanel(GridBagConstraints gbc) {
         leftPanel = new JPanel();
-        leftPanel.setLayout(new BoxLayout(leftPanel, BoxLayout.Y_AXIS));
+        leftPanel.setLayout(new GridBagLayout());
         leftPanel.setOpaque(false);
-        leftPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 5));
+        leftPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 
         JPanel leftContainer = new JPanel(new BorderLayout());
         leftContainer.setOpaque(false);
@@ -47,8 +47,14 @@ public abstract class BasePanel extends BackgroundPanel {
         JScrollPane leftScrollPane = createScrollPane(leftPanel);
         hideButton = createHideButton();
 
+        JSeparator separator = new JSeparator(SwingConstants.VERTICAL);
+        JPanel eastPanel = new JPanel(new BorderLayout());
+        eastPanel.setOpaque(false);
+        eastPanel.add(separator, BorderLayout.WEST);
+        eastPanel.add(hideButton, BorderLayout.CENTER);
+
         leftContainer.add(leftScrollPane, BorderLayout.CENTER);
-        leftContainer.add(hideButton, BorderLayout.EAST);
+        leftContainer.add(eastPanel, BorderLayout.EAST);
 
         // GridBagConstraints for the main panel
         gbc.gridx = 0;
@@ -75,9 +81,15 @@ public abstract class BasePanel extends BackgroundPanel {
     private JButton createHideButton() {
         JButton button = new JButton("◀");
 
-        button.setFont(new Font("DIALOG", Font.PLAIN, 16));
-        button.setForeground(Color.LIGHT_GRAY);
+        button.setFont(new Font("Arial Unicode MS", Font.PLAIN, 16));
+        button.setForeground(new Color(0, 105, 55));
 
+        button.setOpaque(false);
+        button.setBorderPainted(false);
+        button.setFocusPainted(false);
+
+        button.setPreferredSize(new Dimension(30, 40));
+        button.setMinimumSize(new Dimension(30, 30));
         return button;
     }
 
@@ -101,6 +113,12 @@ public abstract class BasePanel extends BackgroundPanel {
             addCardPanel(entry.getKey(), entry.getValue(), index);
             index++;
         }
+
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.gridy = index;
+        gbc.weighty = 1.0;
+        gbc.fill = GridBagConstraints.VERTICAL;
+        leftPanel.add(Box.createVerticalGlue(), gbc);
     }
 
     private void addCardPanel(String key, JPanel panel, int index) {
@@ -109,12 +127,16 @@ public abstract class BasePanel extends BackgroundPanel {
         JButton button = new JButton(key);
         button.putClientProperty("cardKey", key);
 
-        leftPanel.add(button);
-        options[index] = button;
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.gridy = index;
+        gbc.weightx = 1.0;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
 
-        if (index < options.length - 1) {
-            leftPanel.add(Box.createRigidArea(new Dimension(0, 10)));
-        }
+        gbc.insets = new Insets(0, 0, (index < options.length - 1) ? 10 : 0, 0);
+
+        leftPanel.add(button, gbc);
+
+        options[index] = button;
     }
 
     private void addRightPanel(GridBagConstraints gbc) {
