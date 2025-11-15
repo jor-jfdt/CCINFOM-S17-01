@@ -3,6 +3,8 @@ import java.util.*;
 import java.time.*;
 import java.time.format.*;
 import javax.swing.table.DefaultTableModel;
+import java.util.stream.Stream;
+import java.util.stream.Collectors;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ConcurrentHashMap;
 public class AppModel {
@@ -16,6 +18,18 @@ public class AppModel {
 	}
 	
 	static class SQLUtils {
+		static String makeSQLTemplateUpdateSetWhere(String table_name, String set_name, String where_name) {
+			if (null == table_name || null == set_name || null == where_name)
+				throw new IllegalArgumentException("makeSQLTemplateUpdateSetWhere: please check your parameters");
+			return "UPDATE " + table_name + " SET " + set_name + " = ? WHERE " + where_name + " = ?;";
+		}
+		static String makeSQLTemplateInsertIntoValues(String table_name, String... column_names) {
+			if (null == table_name || null == column_names)
+				throw new IllegalArgumentException("makeSQLTemplateInsertIntoValues: please check your parameters");
+			String column_body = "(" + String.join(",", column_names) + ")";
+			String value_body = "(" + Stream.generate(() -> "?").limit(column_names.length).collect(Collectors.joining(",")) + ")";
+			return "INSERT INTO " + table_name + " " + column_body + " VALUES " + value_body + ";";
+		}
 		static String toSQLDate(LocalDate ld) {
 			return ld.format(DateTimeFormatter.ofPattern(DATE_FORMATTING));
 		}
@@ -470,7 +484,7 @@ public class AppModel {
 		}
 	}
 	
-	// For SELECT
+	// For general SELECT statements
 	static ResultSet processQuery(String query) throws SQLException {
 		Statement s = null;
 		ResultSet r = null;
@@ -480,6 +494,31 @@ public class AppModel {
 			s = modelConnection.createStatement(ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY);
 			r = s.executeQuery(query);
 			open_queries.put(r, s);
+			printSuccessLog(AM_SMSG.AMS_PROCSTATEMENT);
+			if (!r.next())
+				printSuccessLog(AM_SMSG.AMS_PROCSTATEMENT_EMPTY);
+		} catch (SQLException se) {
+			se.printStackTrace();
+			modelThrowError(AM_EMSG.AME_PROCSTATEMENT);
+		}
+		return r;
+	}
+	
+	static ResultSet processQuery(String queryTemplate, Object... params) throws SQLException {
+		PreparedStatement ps = null;
+		ResultSet r = null;
+		int i;
+		if (null == modelConnection)
+			modelThrowError(AM_EMSG.AME_MAKECONNECTION);
+		try {
+			ps = modelConnection.prepareStatement(queryTemplate,
+				ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY);
+			i = 1;
+			if (params != null)
+				for (Object o : params)
+					ps.setObject(i++, o);
+			r = ps.executeQuery();
+			open_queries.put(r, ps);
 			printSuccessLog(AM_SMSG.AMS_PROCSTATEMENT);
 			if (!r.next())
 				printSuccessLog(AM_SMSG.AMS_PROCSTATEMENT_EMPTY);
@@ -507,6 +546,34 @@ public class AppModel {
 			if (s != null) {
 				try {
 					s.close();
+				} catch (SQLException se) {
+					se.printStackTrace();
+				}
+			}
+		}
+		return r;
+	}
+	
+	static int processNonQuery(String dmlTemplate, Object... params) throws SQLException {
+		PreparedStatement ps = null;
+		int i, r = 0;
+		if (null == modelConnection)
+			modelThrowError(AM_EMSG.AME_MAKECONNECTION);
+		try {
+			ps = modelConnection.prepareStatement(dmlTemplate);
+			i = 1;
+			if (params != null)
+				for (Object o : params)
+					ps.setObject(i++, o);
+			r = ps.executeUpdate();
+			printSuccessLog(AM_SMSG.AMS_PROCSTATEMENT);
+		} catch (SQLException se) {
+			se.printStackTrace();
+			modelThrowError(AM_EMSG.AME_PROCSTATEMENT);
+		} finally {
+			if (ps != null) {
+				try {
+					ps.close();
 				} catch (SQLException se) {
 					se.printStackTrace();
 				}
