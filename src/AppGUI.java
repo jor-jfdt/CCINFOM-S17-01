@@ -14,7 +14,7 @@ public class AppGUI extends JFrame {
 
         cardContainer = new JPanel(new CardLayout());
 
-        this.setMinimumSize(new Dimension(640, 360));
+        this.setMinimumSize(new Dimension(1280, 720));
         this.setMaximumSize(new Dimension(1920, 1080));
 
         this.addComponentListener(new ComponentAdapter() {
@@ -143,21 +143,19 @@ public class AppGUI extends JFrame {
     }
 
     public void update() {
-        int fontSize = Math.max(screenWidth / 40, screenHeight / 25);
-        int buttonFontSize = Math.max(screenWidth / 80, screenHeight / 40);
-        Dimension buttonSize = new Dimension(screenWidth / 4, screenHeight / 8);
-
-        // Scale logo - adjust the divisor to make it smaller/larger
         int logoSize = Math.min(screenWidth / 8, screenHeight / 6);
+
         if (applicationLogoLabel != null && applicationLogoLabel.getIcon() != null) {
             ImageIcon icon = (ImageIcon) applicationLogoLabel.getIcon();
             Image scaledImage = icon.getImage().getScaledInstance(logoSize, logoSize, Image.SCALE_SMOOTH);
             applicationLogoLabel.setIcon(new ImageIcon(scaledImage));
         }
 
-        applicationTitleLabel.setFont(new Font("Algerian", Font.BOLD, fontSize));
+        applicationTitleLabel.setFont(UITools.getTitleFont());
+        applicationTitleLabel.setForeground(UITools.getPrimaryColor());
 
-        Font buttonFont = new Font("Algerian", Font.PLAIN, buttonFontSize);
+        Dimension buttonSize = UITools.getMainMenuButtonSize();
+        Font buttonFont = UITools.getButtonFont();
         for (JButton button : menuButtons) {
             button.setPreferredSize(buttonSize);
             button.setMaximumSize(buttonSize);
