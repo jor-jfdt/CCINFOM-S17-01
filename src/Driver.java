@@ -1,9 +1,8 @@
 import javax.swing.*;
 import java.awt.*;
 import java.sql.*;
-import java.time.LocalDate;
 import java.io.IOException;
-import javax.swing.table.DefaultTableModel;
+
 public class Driver {
     public static void main(String[] args) throws SQLException, ClassNotFoundException, IOException, InterruptedException {
         configureLookAndFeel();
