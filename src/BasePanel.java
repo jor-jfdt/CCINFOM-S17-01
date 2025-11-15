@@ -13,13 +13,19 @@ public abstract class BasePanel extends BackgroundPanel {
         this.tableMap = new HashMap<>();
         initializeComponents();
     }
-
     private void initializeComponents() {
         setLayout(new GridBagLayout());
         GridBagConstraints gbc = new GridBagConstraints();
 
+        addTitleSection(gbc);
+        addLeftPanel(gbc);
+        addRightPanel(gbc);
+    }
+
+    private void addTitleSection(GridBagConstraints gbc) {
         titleLabel = new JLabel(title, SwingConstants.CENTER);
         updateFont();
+
         gbc.gridx = 0;
         gbc.gridy = 0;
         gbc.gridwidth = 2;
@@ -27,29 +33,26 @@ public abstract class BasePanel extends BackgroundPanel {
         gbc.weighty = 0.2;
         gbc.insets = new Insets(10, 0, 20, 0);
         add(titleLabel, gbc);
+    }
 
+    private void addLeftPanel(GridBagConstraints gbc) {
         leftPanel = new JPanel();
-        leftPanel.setOpaque(false); // Make transparent to show background
+        leftPanel.setBackground(Color.WHITE); // Opaque white background
         leftPanel.setLayout(new BoxLayout(leftPanel, BoxLayout.Y_AXIS));
+        leftPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 
-        JScrollPane leftScrollPane = new JScrollPane(leftPanel);
-        leftScrollPane.setOpaque(false);
-        leftScrollPane.getViewport().setOpaque(false);
-        leftScrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
-        leftScrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
-        leftScrollPane.setBorder(BorderFactory.createEmptyBorder());
-        leftScrollPane.getVerticalScrollBar().setUnitIncrement(16);
+        JScrollPane leftScrollPane = createScrollPane(leftPanel);
+        hideButton = createHideButton();
 
-        hideButton = new JButton("◀");
-        hideButton.setPreferredSize(new Dimension(25, 50));
-        hideButton.setMinimumSize(new Dimension(25, 30));
-        hideButton.setBackground(Color.LIGHT_GRAY);
-        hideButton.setBorder(BorderFactory.createRaisedBevelBorder());
+        JPanel eastPanel = new JPanel(new BorderLayout());
+        eastPanel.setBackground(Color.WHITE); // Opaque
+        eastPanel.add(new JSeparator(SwingConstants.VERTICAL), BorderLayout.WEST);
+        eastPanel.add(hideButton, BorderLayout.CENTER);
 
         JPanel leftContainer = new JPanel(new BorderLayout());
-        leftContainer.setOpaque(false);
+        leftContainer.setBackground(Color.WHITE); // Opaque
         leftContainer.add(leftScrollPane, BorderLayout.CENTER);
-        leftContainer.add(hideButton, BorderLayout.EAST);
+        leftContainer.add(eastPanel, BorderLayout.EAST);
         leftContainer.setPreferredSize(new Dimension(100, 100));
 
         gbc.gridx = 0;
@@ -60,19 +63,88 @@ public abstract class BasePanel extends BackgroundPanel {
         gbc.fill = GridBagConstraints.BOTH;
         gbc.insets = new Insets(10, 10, 10, 5);
         add(leftContainer, gbc);
+    }
 
+    private JScrollPane createScrollPane(JPanel panel) {
+        JScrollPane scrollPane = new JScrollPane(panel);
+        scrollPane.setOpaque(false);
+        scrollPane.getViewport().setOpaque(false);
+        scrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
+        scrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+        scrollPane.setBorder(BorderFactory.createEmptyBorder());
+        scrollPane.getVerticalScrollBar().setUnitIncrement(16);
+        return scrollPane;
+    }
+
+    private JButton createHideButton() {
+        JButton button = new JButton("◀");
+
+        button.setFont(new Font("Arial", Font.BOLD, 16));
+        button.setForeground(Color.DARK_GRAY);
+
+        button.setOpaque(false);
+        button.setContentAreaFilled(false);
+        button.setBorderPainted(false);
+        button.setFocusPainted(false);
+
+        button.setPreferredSize(new Dimension(30, 50));
+        button.setMinimumSize(new Dimension(30, 30));
+        return button;
+    }
+
+    private void initializeEmptyCard() {
+        JPanel emptyPanel = new JPanel(new GridBagLayout());
+        emptyPanel.setBackground(Color.WHITE); // Opaque
+
+        JLabel emptyLabel = new JLabel("Select an option.");
+        emptyLabel.setFont(new Font("Tahoma", Font.PLAIN, 18));
+        emptyLabel.setForeground(Color.DARK_GRAY);
+
+        emptyPanel.add(emptyLabel, new GridBagConstraints());
+        centerCardPanel.add(emptyPanel, "empty");
+        rightCardLayout.show(centerCardPanel, "empty");
+    }
+
+    protected void populateCardLayout(Map<String, JPanel> cardPanelMap) {
+        options = new JButton[cardPanelMap.size()];
+        int index = 0;
+
+        for (Map.Entry<String, JPanel> entry : cardPanelMap.entrySet()) {
+            addCardPanel(entry.getKey(), entry.getValue(), index);
+            index++;
+        }
+    }
+
+    private void addCardPanel(String key, JPanel panel, int index) {
+        centerCardPanel.add(panel, key);
+
+        JButton button = new JButton(key);
+        button.putClientProperty("cardKey", key);
+
+        leftPanel.add(button);
+        options[index] = button;
+
+        if (index < options.length - 1) {
+            leftPanel.add(Box.createRigidArea(new Dimension(0, 10)));
+        }
+    }
+
+    private void addRightPanel(GridBagConstraints gbc) {
         rightPanel = new JPanel(new BorderLayout());
-        rightPanel.setOpaque(true);
-        rightPanel.setBackground(Color.LIGHT_GRAY);
+        rightPanel.setBackground(Color.WHITE); // Opaque
 
         centerCardPanel = new JPanel();
+        centerCardPanel.setBackground(Color.WHITE); // Opaque
         rightCardLayout = new CardLayout();
         centerCardPanel.setLayout(rightCardLayout);
 
         southButtonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 10, 10));
+        southButtonPanel.setBackground(Color.WHITE); // Opaque
 
         rightPanel.add(centerCardPanel, BorderLayout.CENTER);
         rightPanel.add(southButtonPanel, BorderLayout.SOUTH);
+
+        initializeEmptyCard();
 
         gbc.gridx = 1;
         gbc.gridy = 1;
@@ -82,36 +154,25 @@ public abstract class BasePanel extends BackgroundPanel {
         gbc.fill = GridBagConstraints.BOTH;
         gbc.insets = new Insets(10, 5, 10, 10);
         add(rightPanel, gbc);
-
-        JPanel emptyPanel = new JPanel();
-        emptyPanel.add(new JLabel("Select an option."));
-        centerCardPanel.add(emptyPanel, "empty");
-        rightCardLayout.show(centerCardPanel, "empty");
-    }
-
-    protected void populateCardLayout(Map<String, JPanel> cardPanelMap) {
-        options = new JButton[cardPanelMap.size()];
-        int i = 0;
-        for (String key : cardPanelMap.keySet()) {
-            JPanel cardPanel = cardPanelMap.get(key);
-            centerCardPanel.add(cardPanel, key);
-            JButton button = new JButton(key);
-            leftPanel.add(button);
-            options[i] = button;
-            i++;
-            if (i < cardPanelMap.size() - 1) {
-                leftPanel.add(Box.createRigidArea(new Dimension(0, 10)));
-            }
-        }
     }
 
     protected JPanel createCRUDPanel(String key, String searchLabel, String[] header) {
         JPanel crudPanel = new JPanel(new BorderLayout(10,10));
+        crudPanel.setBackground(Color.WHITE); // Opaque
         crudPanel.setBorder(BorderFactory.createEmptyBorder(10,10,10,10));
 
         JPanel searchPanel = new JPanel(new BorderLayout(5, 0));
-        searchPanel.add(new JLabel(searchLabel + " "), BorderLayout.WEST);
-        searchPanel.add(new JTextField(), BorderLayout.CENTER);
+        searchPanel.setBackground(Color.WHITE); // Opaque
+
+        JLabel label = new JLabel(searchLabel + " ");
+        label.setForeground(UITools.getPrimaryColor());
+        label.setFont(UITools.getLabelFont());
+
+        searchPanel.add(label, BorderLayout.WEST);
+
+        JTextField searchField = new JTextField();
+        searchPanel.add(searchField, BorderLayout.CENTER);
+
         crudPanel.add(searchPanel, BorderLayout.NORTH);
 
         JTable table = new JTable(new DefaultTableModel(new Object[][] {}, header));
@@ -143,8 +204,8 @@ public abstract class BasePanel extends BackgroundPanel {
     }
 
     public void updateFont() {
-        titleLabel.setFont(new Font("Algerian", Font.BOLD,
-                Math.max(AppGUI.screenWidth / 40, AppGUI.screenHeight / 25)));
+        titleLabel.setFont(UITools.getTitleFont());
+        titleLabel.setForeground(UITools.getPrimaryColor());
     }
 
     public void showCard(String key) {

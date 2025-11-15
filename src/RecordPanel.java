@@ -1,8 +1,6 @@
 import javax.swing.*;
-import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 import java.awt.event.ActionListener;
-import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
@@ -14,35 +12,15 @@ public class RecordPanel extends BasePanel {
         updateButton = new JButton("Update");
         voidButton = new JButton("Delete");
 
+        UITools.styleButton(addButton);
+        UITools.styleButton(updateButton);
+        UITools.styleButton(voidButton);
+
         southButtonPanel.add(addButton);
         southButtonPanel.add(updateButton);
         southButtonPanel.add(voidButton);
 
         createCRUDContent();
-    }
-
-    @Override
-    protected void updateComponent() {
-        if (options != null) {
-            int leftPanelWidth = (int)(AppGUI.screenWidth * 0.3);
-            int hideButtonWidth = 25; // Account for hide button width
-            int availableWidth = leftPanelWidth - hideButtonWidth - 60; // Extra margin for padding
-            int buttonHeight = (int)(AppGUI.screenHeight * 0.08); // Slightly smaller height
-            Dimension buttonSize = new Dimension(availableWidth, buttonHeight);
-
-            Font buttonFont = new Font("Algerian", Font.PLAIN,
-                    Math.max(AppGUI.screenWidth / 100, AppGUI.screenHeight / 60));
-
-            for (JButton option : options) {
-                option.setPreferredSize(buttonSize);
-                option.setMaximumSize(buttonSize);
-                option.setMinimumSize(buttonSize);
-                option.setFont(buttonFont);
-                option.setAlignmentX(Component.CENTER_ALIGNMENT);
-            }
-        }
-        leftPanel.revalidate();
-        leftPanel.repaint();
     }
 
     @Override
@@ -84,6 +62,24 @@ public class RecordPanel extends BasePanel {
         ));
 
         populateCardLayout(panelMap);
+    }
+
+    @Override
+    protected void updateComponent() {
+        if (options != null) {
+            Dimension buttonSize = UITools.getLeftPanelButtonSize();
+            Font buttonFont = UITools.getLeftPanelButtonFont();
+
+            for (JButton option : options) {
+                option.setPreferredSize(buttonSize);
+                option.setMaximumSize(buttonSize);
+                option.setMinimumSize(buttonSize);
+                option.setFont(buttonFont);
+                option.setAlignmentX(Component.CENTER_ALIGNMENT);
+            }
+        }
+        leftPanel.revalidate();
+        leftPanel.repaint();
     }
 
     public void addAddButtonListener(ActionListener listener) {

@@ -52,23 +52,46 @@ public class Driver {
 				}
 			}
 
-			// Customize Nimbus colors
-			UIManager.put("Button.background", new Color(200, 200, 255));
-			UIManager.put("Button.foreground", Color.DARK_GRAY);
-			UIManager.put("Button.font", new Font("Arial", Font.BOLD, 14));
+			Font headerFont = new Font("Tahoma", Font.BOLD, 16);
+			Font titleFont = new Font("Tahoma", Font.BOLD, 24);
+			Font labelFont = new Font("Tahoma", Font.PLAIN, 13);
+			Font buttonFont = new Font("Tahoma", Font.BOLD, 13);
+			Font textFont = new Font("Tahoma", Font.PLAIN, 13);
 
-			UIManager.put("ScrollBar.thumb", new Color(100, 150, 200));
+			Color buttonGreen = new Color(0, 105, 55);
+
+			UIManager.put("Button.background", Color.LIGHT_GRAY);
+			UIManager.put("Button.foreground", buttonGreen);
+			UIManager.put("Button.font", buttonFont);
+			UIManager.put("Button[Enabled].textForeground", buttonGreen);
+			UIManager.put("Button[MouseOver].textForeground", buttonGreen);
+			UIManager.put("Button[Pressed].textForeground", buttonGreen);
+			UIManager.put("Button[Focused].textForeground", buttonGreen);
+
+			UIManager.put("ScrollBar.thumb", new Color(102, 187, 106));
 			UIManager.put("ScrollBar.track", new Color(220, 220, 220));
 
-			UIManager.put("Panel.background", new Color(240, 240, 240));
+			UIManager.put("Panel.background", new Color(245, 245, 245));
+			UIManager.put("Panel.font", labelFont);
 
-			UIManager.put("Label.font", new Font("Verdana", Font.PLAIN, 12));
-			UIManager.put("TextField.font", new Font("Verdana", Font.PLAIN, 12));
-			UIManager.put("Table.font", new Font("Verdana", Font.PLAIN, 12));
+			UIManager.put("Label.font", labelFont);
+			UIManager.put("Label.foreground", new Color(0, 105, 55));
 
-			UIManager.put("nimbusBase", new Color(80, 120, 180));
+			UIManager.put("TextField.font", textFont);
+			UIManager.put("TextField.background", Color.WHITE);
+			UIManager.put("TextField.foreground", new Color(0, 105, 55));
+
+			UIManager.put("Table.font", textFont);
+			UIManager.put("Table.foreground", new Color(0, 105, 55));
+			UIManager.put("TableHeader.font", headerFont);
+			UIManager.put("TableHeader.foreground", new Color(0, 105, 55));
+
+			UIManager.put("TitledBorder.font", headerFont);
+			UIManager.put("TitledBorder.titleColor", new Color(0, 105, 55));
+
+			UIManager.put("nimbusBase", new Color(0, 105, 55));
 			UIManager.put("nimbusBlueGrey", new Color(190, 190, 190));
-			UIManager.put("control", new Color(230, 230, 230));
+			UIManager.put("control", Color.LIGHT_GRAY);
 
 		} catch (ClassNotFoundException | InstantiationException |
 				 IllegalAccessException | UnsupportedLookAndFeelException e) {
