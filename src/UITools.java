@@ -15,7 +15,7 @@ public class UITools {
     }
 
     public static Font getLeftPanelButtonFont() {
-        int fontSize = Math.max(AppGUI.screenWidth / 110, AppGUI.screenHeight / 65);
+        int fontSize = Math.max(AppGUI.screenWidth / 90, AppGUI.screenHeight / 50);
         return new Font("Tahoma", Font.PLAIN, fontSize);
     }
 
@@ -25,6 +25,11 @@ public class UITools {
 
     public static Dimension getMainMenuButtonSize() {
         return new Dimension(AppGUI.screenWidth / 4, AppGUI.screenHeight / 8);
+    }
+    public static Dimension getHideButtonSize() {
+        int buttonHeight = (int)(AppGUI.screenHeight * 0.08);
+        int hideButtonWidth = Math.max(40, AppGUI.screenWidth / 40);
+        return new Dimension(hideButtonWidth, buttonHeight);
     }
 
     public static Dimension getLeftPanelButtonSize() {

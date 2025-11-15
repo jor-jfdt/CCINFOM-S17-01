@@ -37,28 +37,24 @@ public abstract class BasePanel extends BackgroundPanel {
 
     private void addLeftPanel(GridBagConstraints gbc) {
         leftPanel = new JPanel();
-        leftPanel.setBackground(Color.WHITE); // Opaque white background
         leftPanel.setLayout(new BoxLayout(leftPanel, BoxLayout.Y_AXIS));
-        leftPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+        leftPanel.setOpaque(false);
+        leftPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 5));
+
+        JPanel leftContainer = new JPanel(new BorderLayout());
+        leftContainer.setOpaque(false);
 
         JScrollPane leftScrollPane = createScrollPane(leftPanel);
         hideButton = createHideButton();
 
-        JPanel eastPanel = new JPanel(new BorderLayout());
-        eastPanel.setBackground(Color.WHITE); // Opaque
-        eastPanel.add(new JSeparator(SwingConstants.VERTICAL), BorderLayout.WEST);
-        eastPanel.add(hideButton, BorderLayout.CENTER);
-
-        JPanel leftContainer = new JPanel(new BorderLayout());
-        leftContainer.setBackground(Color.WHITE); // Opaque
         leftContainer.add(leftScrollPane, BorderLayout.CENTER);
-        leftContainer.add(eastPanel, BorderLayout.EAST);
-        leftContainer.setPreferredSize(new Dimension(100, 100));
+        leftContainer.add(hideButton, BorderLayout.EAST);
 
+        // GridBagConstraints for the main panel
         gbc.gridx = 0;
         gbc.gridy = 1;
         gbc.gridwidth = 1;
-        gbc.weightx = 0.3;
+        gbc.weightx = 0.1;
         gbc.weighty = 0.8;
         gbc.fill = GridBagConstraints.BOTH;
         gbc.insets = new Insets(10, 10, 10, 5);
@@ -79,26 +75,18 @@ public abstract class BasePanel extends BackgroundPanel {
     private JButton createHideButton() {
         JButton button = new JButton("◀");
 
-        button.setFont(new Font("Arial", Font.BOLD, 16));
-        button.setForeground(Color.DARK_GRAY);
+        button.setFont(new Font("DIALOG", Font.PLAIN, 16));
+        button.setForeground(Color.LIGHT_GRAY);
 
-        button.setOpaque(false);
-        button.setContentAreaFilled(false);
-        button.setBorderPainted(false);
-        button.setFocusPainted(false);
-
-        button.setPreferredSize(new Dimension(30, 50));
-        button.setMinimumSize(new Dimension(30, 30));
         return button;
     }
 
     private void initializeEmptyCard() {
         JPanel emptyPanel = new JPanel(new GridBagLayout());
-        emptyPanel.setBackground(Color.WHITE); // Opaque
+        emptyPanel.setOpaque(false);
 
         JLabel emptyLabel = new JLabel("Select an option.");
         emptyLabel.setFont(new Font("Tahoma", Font.PLAIN, 18));
-        emptyLabel.setForeground(Color.DARK_GRAY);
 
         emptyPanel.add(emptyLabel, new GridBagConstraints());
         centerCardPanel.add(emptyPanel, "empty");
@@ -131,15 +119,15 @@ public abstract class BasePanel extends BackgroundPanel {
 
     private void addRightPanel(GridBagConstraints gbc) {
         rightPanel = new JPanel(new BorderLayout());
-        rightPanel.setBackground(Color.WHITE); // Opaque
+        rightPanel.setOpaque(false);
 
         centerCardPanel = new JPanel();
-        centerCardPanel.setBackground(Color.WHITE); // Opaque
+        centerCardPanel.setOpaque(false);
         rightCardLayout = new CardLayout();
         centerCardPanel.setLayout(rightCardLayout);
 
-        southButtonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 10, 10));
-        southButtonPanel.setBackground(Color.WHITE); // Opaque
+        southButtonPanel = new JPanel(new BorderLayout(10, 10));
+        southButtonPanel.setOpaque(false);
 
         rightPanel.add(centerCardPanel, BorderLayout.CENTER);
         rightPanel.add(southButtonPanel, BorderLayout.SOUTH);
@@ -149,7 +137,7 @@ public abstract class BasePanel extends BackgroundPanel {
         gbc.gridx = 1;
         gbc.gridy = 1;
         gbc.gridwidth = 1;
-        gbc.weightx = 0.7;
+        gbc.weightx = 0.9;
         gbc.weighty = 0.8;
         gbc.fill = GridBagConstraints.BOTH;
         gbc.insets = new Insets(10, 5, 10, 10);
@@ -158,11 +146,9 @@ public abstract class BasePanel extends BackgroundPanel {
 
     protected JPanel createCRUDPanel(String key, String searchLabel, String[] header) {
         JPanel crudPanel = new JPanel(new BorderLayout(10,10));
-        crudPanel.setBackground(Color.WHITE); // Opaque
         crudPanel.setBorder(BorderFactory.createEmptyBorder(10,10,10,10));
 
         JPanel searchPanel = new JPanel(new BorderLayout(5, 0));
-        searchPanel.setBackground(Color.WHITE); // Opaque
 
         JLabel label = new JLabel(searchLabel + " ");
         label.setForeground(UITools.getPrimaryColor());

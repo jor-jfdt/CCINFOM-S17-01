@@ -16,9 +16,12 @@ public class RecordPanel extends BasePanel {
         UITools.styleButton(updateButton);
         UITools.styleButton(voidButton);
 
-        southButtonPanel.add(addButton);
-        southButtonPanel.add(updateButton);
+        southButtonPanel.setLayout(new BoxLayout(southButtonPanel, BoxLayout.X_AXIS));
         southButtonPanel.add(voidButton);
+        southButtonPanel.add(Box.createHorizontalGlue());
+        southButtonPanel.add(updateButton);
+        southButtonPanel.add(Box.createHorizontalGlue());
+        southButtonPanel.add(addButton);
 
         createCRUDContent();
     }
