@@ -1,6 +1,7 @@
 import javax.swing.*;
 import java.awt.*;
 
+/*
 public class TransactionPanel extends BasePanel {
     public TransactionPanel() {
         super("Manage Transaction", "app_wallpaper.png");
@@ -48,3 +49,5 @@ public class TransactionPanel extends BasePanel {
         leftPanel.repaint();
     }
 }
+*/
+

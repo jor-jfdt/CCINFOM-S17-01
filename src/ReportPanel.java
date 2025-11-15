@@ -1,6 +1,7 @@
 import javax.swing.*;
 import java.awt.*;
 
+/*
 public class ReportPanel extends BasePanel {
     public ReportPanel() {
         super("Generate Report", "app_wallpaper.png");
@@ -45,3 +46,4 @@ public class ReportPanel extends BasePanel {
         leftPanel.repaint();
     }
 }
+ */

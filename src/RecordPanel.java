@@ -1,32 +1,24 @@
 import javax.swing.*;
+import javax.swing.table.DefaultTableModel;
 import java.awt.*;
+import java.awt.event.ActionListener;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 public class RecordPanel extends BasePanel {
     public RecordPanel() {
         super("Record Management", "app_wallpaper.png");
-        createButtons();
-    }
 
-    private void createButtons() {
-        // Set a fixed size for the left panel to constrain it to 30% width
-        leftPanel.setLayout(new BoxLayout(leftPanel, BoxLayout.Y_AXIS));
-        leftPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+        addButton = new JButton("Add");
+        updateButton = new JButton("Update");
+        voidButton = new JButton("Delete");
 
-        options = new JButton[5];
-        options[0] = new JButton("Client");
-        options[1] = new JButton("Company Policy");
-        options[2] = new JButton("Illness");
-        options[3] = new JButton("Hospital");
-        options[4] = new JButton("Doctor");
+        southButtonPanel.add(addButton);
+        southButtonPanel.add(updateButton);
+        southButtonPanel.add(voidButton);
 
-        for (int i = 0; i < options.length; i++) {
-            leftPanel.add(options[i]);
-            if (i < options.length - 1) {
-                leftPanel.add(Box.createRigidArea(new Dimension(0, 10)));
-            }
-        }
-
-        updateComponent();
+        createCRUDContent();
     }
 
     @Override
@@ -52,4 +44,61 @@ public class RecordPanel extends BasePanel {
         leftPanel.revalidate();
         leftPanel.repaint();
     }
+
+    @Override
+    protected void createCRUDContent() {
+        Map<String, JPanel> panelMap = new LinkedHashMap<>();
+
+        panelMap.put("Clients", createCRUDPanel(
+                "clients",
+                "Search Client by Name:",
+                new String[] { "client_id", "first_name", "last_name", "middle_initial",
+                               "birth_date", "is_employee", "sex", "is_active" }
+        ));
+
+        panelMap.put("Policy", createCRUDPanel(
+                "policy",
+                "Search Policy by Name:",
+                new String[] { "policy_id", "policy_name", "coverage_type", "coverage_limit",
+                               "payment_period", "inclusion"}
+        ));
+
+        panelMap.put("Hospital", createCRUDPanel(
+                "hospital",
+                "Search Hospital by Name:",
+                new String[] { "hospital_id", "hospital_name", "address",
+                               "city", "zipcode", "contact_no", "email" }
+        ));
+
+        panelMap.put("Doctor", createCRUDPanel(
+                "doctor",
+                "Search Doctor by Name:",
+                new String[] { "doctor_id", "first_name", "last_name", "middle_initial", "doctor_type",
+                               "contact_no", "email" }
+        ));
+
+        panelMap.put("Illness", createCRUDPanel(
+                "illness",
+                "Search Illness by Name:",
+                new String[] { "illness_id", "illness_name", "icd10_code" }
+        ));
+
+        populateCardLayout(panelMap);
+    }
+
+    public void addAddButtonListener(ActionListener listener) {
+        addButton.addActionListener(listener);
+    }
+
+    public void addUpdateButtonListener(ActionListener listener) {
+        updateButton.addActionListener(listener);
+    }
+
+    public void addVoidButtonListener(ActionListener listener) {
+        voidButton.addActionListener(listener);
+    }
+
+    private JButton addButton;
+    private JButton updateButton;
+    private JButton voidButton;
 }
