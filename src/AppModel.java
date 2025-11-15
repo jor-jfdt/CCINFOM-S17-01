@@ -92,7 +92,7 @@ public class AppModel {
 		i = 0;
 		if (statementSet.length > 0) {
 			for (String s : statementSet) {
-				System.out.println("[read] " + s);
+				//System.out.println("[read] " + s);
 				if (!s.isEmpty())
 					if (s.toLowerCase().trim().startsWith("SELECT"))
 						result[i++] = processQuery(s);
@@ -309,7 +309,7 @@ public class AppModel {
 				");"
 			);
 			*/
-			readSQLFile("example_query.sql");
+			readSQLFile("initialize_database.sql");
 			printSuccessLog(AM_SMSG.AMS_MAKECONNECTION);
 		} catch (SQLException se) {
 			se.printStackTrace();
