@@ -16,10 +16,17 @@ public class AppModel {
 	// MySQL port
 	static final String JDBC_MAIN_ADDRESS = "jdbc:mysql://localhost:3306/";
 	static enum AM_SMSG { AMS_MAKECONNECTION, AMS_PROCSTATEMENT, AMS_PROCSTATEMENT_EMPTY }
-	static enum AM_EMSG { AME_MAKECONNECTION, AME_PROCSTATEMENT, AME_JCONNECTOR }
+	static enum AM_EMSG { AME_MAKECONNECTION, AME_CONNECTION_CLOSED, AME_PROCSTATEMENT, AME_JCONNECTOR }
 	
-	AppModel() throws SQLException, ClassNotFoundException, IOException {
-		enterDatabase();
+	AppModel(String database_name, String username, String password) throws SQLException, ClassNotFoundException {
+		try {
+			Class.forName("com.mysql.cj.jdbc.Driver");
+		} catch (ClassNotFoundException cnfe) {
+			throw new ClassNotFoundException("MySQL J Connector is malconfigured.", cnfe);
+		}
+		DATABASE_NAME = database_name;
+		MYSQL_USERNAME = username;
+		MYSQL_PASSWORD = password;
 	}
 	
 	static class SQLUtils {
@@ -34,6 +41,11 @@ public class AppModel {
 			String column_body = "(" + String.join(",", column_names) + ")";
 			String value_body = "(" + Stream.generate(() -> "?").limit(column_names.length).collect(Collectors.joining(",")) + ")";
 			return "INSERT INTO " + table_name + " " + column_body + " VALUES " + value_body + ";";
+		}
+		static String makeSQLTemplateSelectFrom(String table_name, String... ordered_column_names) {
+			if (null == table_name || null == ordered_column_names)
+				throw new IllegalArgumentException("makeSQLTemplateSelectFrom: please check your parameters");
+			return "SELECT " + String.join(",", ordered_column_names) + " FROM " + table_name + ";";
 		}
 		static String toSQLDate(LocalDate ld) {
 			return ld.format(DateTimeFormatter.ofPattern(DATE_FORMATTING));
@@ -63,9 +75,17 @@ public class AppModel {
 		static boolean genderIsValid(char c) {
 			return c == 'M' || c == 'F';
 		}
+		
+		static final int LONG_STRING_LENGTH = 254;
+		static final int SHORT_STRING_LENGTH = 127;
+		static final int SHORTER_STRING_LENGTH = 15;
+		static final int CHAR_LENGTH = 1;
+		static final String DATE_FORMATTING = "yyyy-MM-dd";
+		static final String REGEX_LATIN1 = "\\A[\\u0000-\\u00FF]*\\z";
+		static final String REGEX_EMAIL = "^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$";
 	}
 	
-	static Object[] readSQLFile(String sql_path) throws SQLException, IOException, InvalidPathException {
+	Object[] readSQLFile(String sql_path) throws SQLException, IOException, InvalidPathException {
 		Path fp = null;
 		String content = null;
 		String[] statementSet;
@@ -103,230 +123,153 @@ public class AppModel {
 		return result;
 	}
 	
-	static ResultSet processQuery(String queryTemplate, Object... params) throws SQLException {
-		PreparedStatement ps = null;
-		ResultSet r = null;
-		int i;
-		if (null == modelConnection)
-			modelThrowError(AM_EMSG.AME_MAKECONNECTION);
-		try {
-			ps = modelConnection.prepareStatement(queryTemplate,
-				ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY);
-			i = 1;
-			if (params != null)
-				for (Object o : params)
-					ps.setObject(i++, o);
-			r = ps.executeQuery();
-			open_queries.put(r, ps);
-			printSuccessLog(AM_SMSG.AMS_PROCSTATEMENT);
-			if (!r.next())
-				printSuccessLog(AM_SMSG.AMS_PROCSTATEMENT_EMPTY);
-		} catch (SQLException se) {
-			se.printStackTrace();
-			modelThrowError(AM_EMSG.AME_PROCSTATEMENT);
-		}
-		return r;
-	}
-	
-	static int processNonQuery(String dmlTemplate, Object... params) throws SQLException {
-		PreparedStatement ps = null;
-		int i, r = 0;
-		if (null == modelConnection)
-			modelThrowError(AM_EMSG.AME_MAKECONNECTION);
-		try {
-			ps = modelConnection.prepareStatement(dmlTemplate);
-			i = 1;
-			if (params != null)
-				for (Object o : params)
-					ps.setObject(i++, o);
-			r = ps.executeUpdate();
-			printSuccessLog(AM_SMSG.AMS_PROCSTATEMENT);
-		} catch (SQLException se) {
-			se.printStackTrace();
-			modelThrowError(AM_EMSG.AME_PROCSTATEMENT);
-		} finally {
-			if (ps != null) {
-				try {
-					ps.close();
-				} catch (SQLException se) {
-					se.printStackTrace();
-				}
-			}
-		}
-		return r;
-	}
-	
-	static DefaultTableModel makeTableModel(ResultSet rs, boolean releaseOnReturn) throws SQLException {
-		if (null == rs)
-			throw new NullPointerException("rs is null");
+	List<Map<String, Object>> processQuery(String queryTemplate, Object... params) throws SQLException {
 		ResultSetMetaData rsmd = null;
-		DefaultTableModel dtm = null;
-		Integer cols;
-		Object[] rowSet;
-		try {
-			rsmd = rs.getMetaData();
-			dtm = new DefaultTableModel();
-			cols = rsmd.getColumnCount();
-			// Columns
-			for (int i = 0; i < cols; i++)
-				dtm.addColumn(rsmd.getColumnLabel(i + 1));
-			// Rows
-			rs.beforeFirst();
-			if (rs.next()) {
-				rs.beforeFirst();
-				while (rs.next()) {
-					rowSet = new Object[cols];
-					for (int i = 0; i < cols; i++)
-						rowSet[i] = rs.getObject(i + 1);
-					dtm.addRow(rowSet);
-					rowSet = null;
+		Map<String, Object> t = null;
+		List<Map<String, Object>> out = new ArrayList<>();
+		int cols, i;
+		if (null == modelConnection || modelConnection.isClosed()) {
+			throw new SQLException("The connection is null or closed. Please connect with enterDatabase().");
+		} else {
+			try (PreparedStatement ps = modelConnection.prepareStatement(queryTemplate,
+				ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY)) {
+				i = 1;
+				if (params != null)
+					for (Object o : params)
+						ps.setObject(i++, o);
+				try (ResultSet rs = ps.executeQuery()) {
+					rsmd = rs.getMetaData();
+					cols = rsmd.getColumnCount();
+					// Column reference for future JTables
+					// This must be a LinkedHashMap so that the column order is not lost
+					t = new LinkedHashMap<>();
+					for (i = 1; i <= cols; i++)
+						t.put(rsmd.getColumnLabel(i), null);
+					out.add(t);
+					rs.beforeFirst();
+					if (rs.next()) {
+						rs.beforeFirst();
+						while (rs.next()) {
+							t = new HashMap<>();
+							for (i = 1; i <= cols; i++)
+								t.put(rsmd.getColumnLabel(i), rs.getObject(i));
+							out.add(t);
+						}
+					}
 				}
+				printSuccessLog(AM_SMSG.AMS_PROCSTATEMENT, queryTemplate);
+				if (out.isEmpty())
+					printSuccessLog(AM_SMSG.AMS_PROCSTATEMENT_EMPTY);
+			} catch (SQLException se) {
+				throw new SQLException("Failed to execute query template; refer to stacktrace", se);
 			}
-			if (releaseOnReturn)
-				releaseResultSet(rs);
-		} catch (SQLException se) {
-			se.printStackTrace();
-			throw new SQLException(String.format("Unable to make a table model for ResultSet@%x.", rs.hashCode()));
-		} finally {
-			rsmd = null;
-			cols = null;
-			rowSet = null;
 		}
+		return out;
+	}
+	
+	int processNonQuery(String dmlTemplate, Object... params) throws SQLException {
+		int i, r = -1;
+		if (null == modelConnection || modelConnection.isClosed()) {
+			throw new SQLException("The connection is null or closed. Please connect with enterDatabase().");
+		} else {
+			try (PreparedStatement ps = modelConnection.prepareStatement(dmlTemplate)) {
+				i = 1;
+				if (params != null)
+					for (Object o : params)
+						ps.setObject(i++, o);
+				r = ps.executeUpdate();
+				printSuccessLog(AM_SMSG.AMS_PROCSTATEMENT, dmlTemplate);
+			} catch (SQLException se) {
+				throw new SQLException("Failed to execute DML template; refer to stacktrace", se);
+			}
+		}
+		return r;
+	}
+	
+	DefaultTableModel makeTableModel(List<Map<String, Object>> maprep) {
+		DefaultTableModel dtm = new DefaultTableModel();
+		Map<String, Object> basis = maprep.get(0);
+		Object[] v;
+		int i, j;
+		for (String k : basis.keySet())
+			dtm.addColumn(k);
+		if (maprep.size() <= 1)
+			return dtm;
+		for (i = 1; i < maprep.size(); i++) {
+			v = new Object[basis.size()];
+			j = 0;
+			for (String k : basis.keySet())
+				v[j++] = maprep.get(i).get(k);
+			dtm.addRow(v);
+			v = null;
+		}
+		basis = null;
 		return dtm;
 	}
 	
-	static DefaultTableModel makeTableFromStatement(String query) throws SQLException {
-		ResultSet proc = null;
-		Integer procHash;
-		DefaultTableModel dtm = null;
-		try {
-			proc = processQuery(query);
-			procHash = proc.hashCode();
-			dtm = makeTableModel(proc, true);
-			System.out.printf("[%s] INFO(table): Table generated for ResultSet@%x.\n", DATABASE_NAME, procHash);
-		} catch (SQLException se) {
-			se.printStackTrace();
-			throw new SQLException("An error occured generating a table from query.");
-		} finally {
-			proc = null;
-			procHash = null;
-		}
-		return dtm;
-	}
-
-	static void releaseResultSet(ResultSet rs) throws SQLException {
-		if (open_queries.get(rs) != null) {
-			try {
-				rs.close();
-				open_queries.get(rs).close();
-				System.out.printf("[%s] INFO(release): Released ResultSet@%x from memory.\n", DATABASE_NAME, rs.hashCode());
-				open_queries.remove(rs);
-				rs = null;
-			} catch (SQLException se) {
-				se.printStackTrace();
-				throw new SQLException(String.format("Unable to release ResultSet@%x from memory.", rs.hashCode()));
-			}
-		}
+	void insertIntoTable(String table_name, Object... values_in_order) throws SQLException {
+		// TODO: Foolproofing
+		/*
+		List<String> attributes = tables.get(table_name.toLowerCase());
+		processNonQuery(AppModel.SQLUtils.makeSQLTemplateInsertIntoValues(table_name, attributes.subList(1, attributes.size())
+			.toArray(new String[0])), values_in_order);
+		*/
+		Map<String, String> attributes = tables.get(table_name.toLowerCase());
+		Set<String> column_names = attributes.keySet();
+		String[] pk_excluded_column_names = Arrays.copyOfRange(column_names.toArray(new String[0]), 1, column_names.size());
+		processNonQuery(AppModel.SQLUtils.makeSQLTemplateInsertIntoValues(table_name, pk_excluded_column_names), values_in_order);
 	}
 	
-	static void releaseAllResultSets() throws SQLException {
-		for (Map.Entry<ResultSet, Statement> e : open_queries.entrySet()) {
-			try {
-				releaseResultSet(e.getKey());
-			} catch (SQLException se) {
-				System.out.printf("[%s] INFO(release_all): ResultSet@%x cannot be removed from memory.\n",
-					DATABASE_NAME, e.getKey().hashCode());
-			}
-		}
+	List<Map<String, Object>> getTableEntries(String table_name, String... requested_columns_in_order) throws SQLException {
+		// TODO: Foolproofing - check if listed columns are actually column names
+		return processQuery(AppModel.SQLUtils.makeSQLTemplateSelectFrom(table_name, requested_columns_in_order));
 	}
 	
-	private static void enterDatabase() throws SQLException, IOException, ClassNotFoundException {
+	void updateColumnValueOfId(String table_name, String column_name, int table_primary_key_id, Object newValue) throws SQLException {
+		// TODO: Foolproofing
+		/*
+		List<String> attributes = tables.get(table_name.toLowerCase());
+		String primary_key_name = attributes.get(0);
+		processNonQuery(AppModel.SQLUtils.makeSQLTemplateUpdateSetWhere(table_name, column_name, primary_key_name),
+			newValue, primary_key_id);
+		*/
+		Map<String, String> attributes = tables.get(table_name.toLowerCase());
+		Set<String> column_names = attributes.keySet();
+		String[] attribute_array = column_names.toArray(new String[0]);
+		String primary_key_name = attribute_array[0];
+		processNonQuery(AppModel.SQLUtils.makeSQLTemplateUpdateSetWhere(table_name, column_name, primary_key_name),
+			newValue, table_primary_key_id);
+	}
+	
+	void enterDatabase() throws SQLException, ClassNotFoundException, IOException {
 		try {
-			Class.forName("com.mysql.cj.jdbc.Driver");
 			modelConnection = DriverManager.getConnection(JDBC_MAIN_ADDRESS, MYSQL_USERNAME, MYSQL_PASSWORD);
-			/*
-			processNonQuery("CREATE DATABASE IF NOT EXISTS `" + DATABASE_NAME + "`;");
-			processNonQuery("USE `" + DATABASE_NAME + "`;");
-			processNonQuery("CREATE TABLE IF NOT EXISTS `client_record` (" +
-				"member_id INT PRIMARY KEY AUTO_INCREMENT, " +
-				"first_name VARCHAR(" + SHORT_STRING_LENGTH + "), " +
-				"last_name VARCHAR(" + SHORT_STRING_LENGTH + "), " +
-				"middle_initial VARCHAR(" + SHORTER_STRING_LENGTH + "), " +
-				"birth_date DATE, " +
-				"is_employee BOOLEAN, " +
-				"sex VARCHAR(" + CHAR_LENGTH + "), " +
-				"enrollment_date DATE, " +
-				"is_active BOOLEAN" +
-				");"
-			);
-			processNonQuery("CREATE TABLE IF NOT EXISTS `treatment_summary` (" +
-				"treatment_id INT PRIMARY KEY AUTO_INCREMENT, " +
-				"treatment_details VARCHAR(" + LONG_STRING_LENGTH + ")" +
-				");"
-			);
-			processNonQuery("CREATE TABLE IF NOT EXISTS `illness` (" +
-				"illness_id INT PRIMARY KEY AUTO_INCREMENT, " +
-				"illness_name VARCHAR(" + SHORT_STRING_LENGTH + "), " +
-				"icd10_code INT" +
-				");"
-			);
-			processNonQuery("CREATE TABLE IF NOT EXISTS `illness_record` (" +
-				"illness_id INT, " +
-				"treatment_id INT, " +
-				"PRIMARY KEY (illness_id, treatment_id), " +
-				"FOREIGN KEY (illness_id) REFERENCES illness(illness_id), " +
-				"FOREIGN KEY (treatment_id) REFERENCES treatment_summary(treatment_id)" +
-				");"
-			);
-			processNonQuery("CREATE TABLE IF NOT EXISTS `company_policy_record` (" +
-				"plan_id INT PRIMARY KEY AUTO_INCREMENT, " +
-				"plan_name VARCHAR(" + SHORT_STRING_LENGTH + "), " +
-				"coverage_type VARCHAR(" + SHORT_STRING_LENGTH + "), " +
-				"coverage_limit FLOAT, " +
-				"premium_amount FLOAT, " +
-				"payment_period VARCHAR(" + SHORT_STRING_LENGTH + "), " +
-				"inclusion VARCHAR(" + SHORT_STRING_LENGTH + ")" +
-				");"
-			);
-			processNonQuery("CREATE TABLE IF NOT EXISTS `hospital_record` (" +
-				"hospital_id INT PRIMARY KEY AUTO_INCREMENT, " +
-				"hospital_name VARCHAR(" + SHORT_STRING_LENGTH + "), " +
-				"address VARCHAR(" + SHORT_STRING_LENGTH + "), " +
-				"city VARCHAR(" + SHORT_STRING_LENGTH + "), " +
-				"zipcode INT, " +
-				"contact_no INT, " +
-				"email VARCHAR(" + LONG_STRING_LENGTH + ")" +
-				");"
-			);
-			processNonQuery("CREATE TABLE IF NOT EXISTS `doctor_record` (" +
-				"doctor_id INT PRIMARY KEY AUTO_INCREMENT, " +
-				"first_name VARCHAR(" + SHORT_STRING_LENGTH + "), " +
-				"last_name VARCHAR(" + SHORT_STRING_LENGTH + "), " +
-				"middle_initial VARCHAR(" + SHORTER_STRING_LENGTH + "), " +
-				"doctor_type VARCHAR(" + SHORT_STRING_LENGTH + "), " +
-				"contact_no INT, " +
-				"email VARCHAR(" + LONG_STRING_LENGTH + ")" +
-				");"
-			);
-			*/
-			readSQLFile("initialize_database.sql");
 			printSuccessLog(AM_SMSG.AMS_MAKECONNECTION);
+			readSQLFile("initialize_database.sql");
+			tables = identifyDatabaseTables();
 		} catch (SQLException se) {
-			se.printStackTrace();
-			modelThrowError(AM_EMSG.AME_MAKECONNECTION);
-		} catch (ClassNotFoundException cnfe) {
-			cnfe.printStackTrace();
-			modelThrowError(AM_EMSG.AME_JCONNECTOR);
+			throw new SQLException("Unable to establish connection with the database.", se);
 		}
 	}
 	
-	private static void printSuccessLog(AM_SMSG msgtype) {
+	void closeDatabase() throws SQLException {
+		if (null == modelConnection || modelConnection.isClosed())
+			return;
+		try {
+			modelConnection.close();
+			modelConnection = null;
+		} catch (SQLException se) {
+			throw new SQLException("Unable to close database connection.", se);
+		}
+	}
+	
+	private void printSuccessLog(AM_SMSG msgtype, Object... params) {
 		switch (msgtype) {
 			case AMS_MAKECONNECTION:
 				System.out.println("[" + DATABASE_NAME + "] INFO: Connection established.");
 				break;
 			case AMS_PROCSTATEMENT:
-				System.out.println("[" + DATABASE_NAME + "] INFO: Statement executed.");
+				System.out.println("[" + DATABASE_NAME + "] INFO: Statement executed: \"" + (String)params[0] + "\".");
 				break;
 			case AMS_PROCSTATEMENT_EMPTY:
 				System.out.println("[" + DATABASE_NAME + "] INFO: Statement executed contains no rows.");
@@ -334,30 +277,36 @@ public class AppModel {
 		}
 	}
 	
-	private static void modelThrowError(AM_EMSG errtype) throws SQLException {
-		switch (errtype) {
-			case AME_MAKECONNECTION:
-				throw new SQLException("Unable to establish connection with the database.");
-			case AME_PROCSTATEMENT:
-				throw new SQLException("Unable to execute statement.");
-			case AME_JCONNECTOR:
-				throw new SQLException("MySQL J Connector is malconfigured.");
+	private Map<String, Map<String, String>> identifyDatabaseTables() throws SQLException {
+		Map<String, Map<String, String>> out = null;
+		List<Map<String, Object>> table_names = processQuery("SELECT TABLE_NAME FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA = DATABASE();");
+		List<Map<String, Object>> column_names = null;
+		Map<String, String> attributes = null;
+		String table_name, column_name, column_type;
+		if (table_names.size() > 1) {
+			out = new HashMap<>();
+			for (int i = 1; i < table_names.size(); i++) {
+				table_name = (String)table_names.get(i).get("TABLE_NAME");
+				//System.out.println(table_name);
+				attributes = new LinkedHashMap<>();
+				column_names = processQuery("SELECT COLUMN_NAME, COLUMN_TYPE FROM INFORMATION_SCHEMA.COLUMNS" + 
+					" WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ?", table_name);
+				for (int j = 1; j < column_names.size(); j++) {
+					column_name = (String)column_names.get(j).get("COLUMN_NAME");
+					column_type = (String)column_names.get(j).get("COLUMN_TYPE");
+					//System.out.println(column_name);
+					attributes.put(column_name, column_type);
+				}
+				out.put(table_name, attributes);
+			}
 		}
+		return out;
 	}
 	
-	private static ConcurrentHashMap<ResultSet, Statement> open_queries = new ConcurrentHashMap<>();
+	private Map<String, Map<String, String>> tables;
 	
-	private static Connection modelConnection;
-	private static final String DATABASE_NAME = "insurance_database";
-	private static final String DATABASE_ADDRESS = JDBC_MAIN_ADDRESS + "/" + DATABASE_NAME;
-	private static final String MYSQL_USERNAME = "root";
-	private static final String MYSQL_PASSWORD = "hajtubtyacty1Bgmail.com";
-	
-	static final int LONG_STRING_LENGTH = 254;
-	static final int SHORT_STRING_LENGTH = 127;
-	static final int SHORTER_STRING_LENGTH = 15;
-	static final int CHAR_LENGTH = 1;
-	static final String DATE_FORMATTING = "yyyy-MM-dd";
-	static final String REGEX_LATIN1 = "\\A[\\u0000-\\u00FF]*\\z";
-	static final String REGEX_EMAIL = "^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$";
+	private Connection modelConnection;
+	private final String DATABASE_NAME;
+	private final String MYSQL_USERNAME;
+	private final String MYSQL_PASSWORD;
 }
