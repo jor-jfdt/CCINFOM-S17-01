@@ -32,11 +32,11 @@ CREATE TABLE IF NOT EXISTS Doctor (
 );
 
 CREATE TABLE IF NOT EXISTS Hospital (
-	hospital_id INT(10) PRIMARY KEY AUTO_INCREMENT,
+	hospital_id INT PRIMARY KEY AUTO_INCREMENT,
 	hospital_name VARCHAR(127),
 	address VARCHAR(254),
 	city VARCHAR(127),
-	zip_code INT, -- 5 digit sya actually
+	zip_code INT,
 	contact_no INT,
 	email VARCHAR(254),
 	data_status VARCHAR(15)
