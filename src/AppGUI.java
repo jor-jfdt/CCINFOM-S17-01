@@ -47,12 +47,92 @@ public class AppGUI extends JFrame {
         });
 
         initializePanels();
-        showPanel("record");
+        showPanel("main");
 
         this.setPreferredSize(new Dimension(screenWidth, screenHeight));
         this.pack();
         this.setLocationRelativeTo(null);
         this.setVisible(true);
+
+        SwingUtilities.invokeLater(this::testDialog);
+    }
+
+    //ai test dialog cuz i am fking lazy
+    private void testDialog() {
+        // Test ADD mode
+        JButton testButton = new JButton("Test ADD Dialog");
+        testButton.addActionListener(e -> {
+            CRUDDialog dialog = new CRUDDialog(
+                    this,
+                    CRUDDialog.Mode.ADD,
+                    new String[]{"first_name", "last_name", "middle_initial", "birth_date", "is_employee", "sex"},
+                    "Add Client"
+            );
+            dialog.setVisible(true);
+
+            if (dialog.isConfirmed()) {
+                System.out.println("Dialog confirmed!");
+                System.out.println("Values: " + dialog.getFieldValues());
+            } else {
+                System.out.println("Dialog cancelled");
+            }
+        });
+
+        // Test UPDATE mode
+        JButton testUpdateButton = new JButton("Test UPDATE Dialog");
+        testUpdateButton.addActionListener(e -> {
+            CRUDDialog dialog = new CRUDDialog(
+                    this,
+                    CRUDDialog.Mode.UPDATE,
+                    new String[]{"first_name", "last_name", "middle_initial", "birth_date", "is_employee", "sex"},
+                    "Update Client"
+            );
+
+            // Pre-populate with test data
+            dialog.setFieldValue("first_name", "John");
+            dialog.setFieldValue("last_name", "Doe");
+            dialog.setFieldValue("middle_initial", "A");
+            dialog.setFieldValue("birth_date", "1990-01-01");
+            dialog.setFieldValue("is_employee", "true");
+            dialog.setFieldValue("sex", "M");
+
+            dialog.setVisible(true);
+
+            if (dialog.isConfirmed()) {
+                System.out.println("Updated values: " + dialog.getFieldValues());
+            }
+        });
+
+        // Test DELETE mode
+        JButton testDeleteButton = new JButton("Test DELETE Dialog");
+        testDeleteButton.addActionListener(e -> {
+            CRUDDialog dialog = new CRUDDialog(
+                    this,
+                    CRUDDialog.Mode.DELETE,
+                    new String[]{"first_name", "last_name", "middle_initial", "birth_date", "is_employee", "sex"},
+                    "Delete Client"
+            );
+
+            dialog.setFieldValue("first_name", "John");
+            dialog.setFieldValue("last_name", "Doe");
+            dialog.setFieldValue("sex", "M");
+
+            dialog.setVisible(true);
+
+            if (dialog.isConfirmed()) {
+                System.out.println("Record deleted!");
+            }
+        });
+
+        // Add test buttons to main panel
+        JPanel testPanel = new JPanel(new FlowLayout());
+        testPanel.setOpaque(false);
+        testPanel.add(testButton);
+        testPanel.add(testUpdateButton);
+        testPanel.add(testDeleteButton);
+
+        mainPanel.add(testPanel);
+        mainPanel.revalidate();
     }
 
     private void createMainPanel() {
