@@ -11,7 +11,7 @@ USE insurance_database;
 CREATE TABLE IF NOT EXISTS Client (
 	member_id INT PRIMARY KEY AUTO_INCREMENT,
 	first_name VARCHAR(127),
-	middle_initial VARCHAR(15),
+	middle_name VARCHAR(127),
 	last_name VARCHAR(127),
 	birth_date DATE,
 	is_employee BOOLEAN,
@@ -23,7 +23,7 @@ CREATE TABLE IF NOT EXISTS Client (
 CREATE TABLE IF NOT EXISTS Doctor (
 	doctor_id INT PRIMARY KEY AUTO_INCREMENT,
 	first_name VARCHAR(127),
-	middle_initial VARCHAR(15),
+	middle_name VARCHAR(127),
 	last_name VARCHAR(127),
 	doctor_type VARCHAR(127),
 	contact_no INT,
