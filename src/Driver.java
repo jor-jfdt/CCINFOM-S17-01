@@ -2,9 +2,10 @@ import javax.swing.*;
 import java.awt.*;
 import java.sql.*;
 import java.time.LocalDate;
+import java.io.IOException;
 import javax.swing.table.DefaultTableModel;
 public class Driver {
-    public static void main(String[] args) throws SQLException, ClassNotFoundException, InterruptedException {
+    public static void main(String[] args) throws SQLException, ClassNotFoundException, IOException, InterruptedException {
         configureLookAndFeel();
 		AppGUI app = new AppGUI("Health Maintenance Organization");
         AppModel model = new AppModel();
@@ -13,6 +14,7 @@ public class Driver {
 		//testSQLQuery(model);
     }
 	
+	/*
 	public static void testSQLQuery(AppModel model) throws SQLException {
 		// Sample SQL query pass with table test
 		DefaultTableModel dtm1 = model.makeTableFromStatement("SELECT * FROM client_record");
@@ -39,6 +41,7 @@ public class Driver {
 			true
 		);
 	}
+	*/
 
 	private static void configureLookAndFeel() {
 		try {

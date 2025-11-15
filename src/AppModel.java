@@ -1,117 +1,123 @@
 import java.sql.*;
 import java.util.*;
 import java.time.*;
-import java.time.format.DateTimeFormatter;
+import java.time.format.*;
 import javax.swing.table.DefaultTableModel;
+import java.util.stream.Stream;
+import java.util.stream.Collectors;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ConcurrentHashMap;
+import java.io.IOException;
+import java.nio.file.InvalidPathException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.nio.file.Path;
 public class AppModel {
 	// MySQL port
-	public static final String JDBC_MAIN_ADDRESS = "jdbc:mysql://localhost:3306/";
-	public static enum AM_SMSG { AMS_MAKECONNECTION, AMS_PROCSTATEMENT, AMS_PROCSTATEMENT_EMPTY }
-	public static enum AM_EMSG { AME_MAKECONNECTION, AME_PROCSTATEMENT, AME_JCONNECTOR }
+	static final String JDBC_MAIN_ADDRESS = "jdbc:mysql://localhost:3306/";
+	static enum AM_SMSG { AMS_MAKECONNECTION, AMS_PROCSTATEMENT, AMS_PROCSTATEMENT_EMPTY }
+	static enum AM_EMSG { AME_MAKECONNECTION, AME_PROCSTATEMENT, AME_JCONNECTOR }
 	
-	AppModel() throws SQLException, ClassNotFoundException {
+	AppModel() throws SQLException, ClassNotFoundException, IOException {
 		enterDatabase();
 	}
 	
-	static String toSQLDate(LocalDate ld) {
-		return ld.format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
-	}
-	
-	static class ClientRecord {
-		static void createRecord(String first_name, String last_name, String middle_initial,
-			LocalDate birth_date, Boolean is_employee, Character sex, LocalDate enrollment_date, Boolean is_active) throws SQLException {
-			//System.out.println(AppModel.toSQLDate(birth_date));
-			processNonQuery(
-				"INSERT INTO client_record " + //INSERT INTO client_record
-				"VALUES (DEFAULT, '"
-				+ first_name.toUpperCase() + "', '"
-				+ last_name.toUpperCase() + "', ' "
-				+ middle_initial.toUpperCase() + "', '"
-				+ AppModel.toSQLDate(birth_date) + "', '"
-				+ (is_employee ? 1 : 0) + "', '"
-				+ Character.toUpperCase(sex) + "', '"
-				+ AppModel.toSQLDate(enrollment_date) + "', '" +
-				(is_active ? 1 : 0) +"');" // VALUES (DEFAULT, '$first_name', '$last_name', '$middle_initial', '$birth_date', '$is_employee', '$sex', '$is_active');
-			);
+	static class SQLUtils {
+		static String makeSQLTemplateUpdateSetWhere(String table_name, String set_name, String where_name) {
+			if (null == table_name || null == set_name || null == where_name)
+				throw new IllegalArgumentException("makeSQLTemplateUpdateSetWhere: please check your parameters");
+			return "UPDATE " + table_name + " SET " + set_name + " = ? WHERE " + where_name + " = ?;";
 		}
-		
-		static void updateFirstName(String first_name, int member_id) throws SQLException {
-			processNonQuery(
-				"UPDATE client_record " +
-				"SET first_name = '" + first_name.toUpperCase() + "' " +
-				"WHERE member_id = " + member_id + ";"
-			);
+		static String makeSQLTemplateInsertIntoValues(String table_name, String... column_names) {
+			if (null == table_name || null == column_names)
+				throw new IllegalArgumentException("makeSQLTemplateInsertIntoValues: please check your parameters");
+			String column_body = "(" + String.join(",", column_names) + ")";
+			String value_body = "(" + Stream.generate(() -> "?").limit(column_names.length).collect(Collectors.joining(",")) + ")";
+			return "INSERT INTO " + table_name + " " + column_body + " VALUES " + value_body + ";";
 		}
-		
-		static void updateLastName(String last_name, int member_id) throws SQLException {
-			processNonQuery(
-				"UPDATE client_record " +
-				"SET last_name = '" + last_name.toUpperCase() + "' " +
-				"WHERE member_id = " + member_id + ";"
-			);
+		static String toSQLDate(LocalDate ld) {
+			return ld.format(DateTimeFormatter.ofPattern(DATE_FORMATTING));
 		}
-		
-		static void updateMiddleInitial(String middle_initial, int member_id) throws SQLException {
-			processNonQuery(
-				"UPDATE client_record " +
-				"SET middle_initial = '" + middle_initial.toUpperCase() + "' " +
-				"WHERE member_id = " + member_id + ";"
-			);
+		static LocalDate stringToDate(String str) {
+			return str != null ? LocalDate.parse(str, DateTimeFormatter.ofPattern(DATE_FORMATTING)) : null;
 		}
-		
-		static void updateBirthDate(LocalDate birth_date, int member_id) throws SQLException {
-			processNonQuery(
-				"UPDATE client_record " +
-				"SET birth_date = '" + AppModel.toSQLDate(birth_date) + "' " +
-				"WHERE member_id = " + member_id + ";"
-			);
+		static boolean stringFitsLong(String str) {
+			return str != null && str.length() > 0 && str.length() <= LONG_STRING_LENGTH && str.matches(REGEX_LATIN1);
 		}
-		
-		static void updateIsEmployee(Boolean is_employee, int member_id) throws SQLException {
-			processNonQuery(
-				"UPDATE client_record " +
-				"SET is_employee = '" + is_employee + "' " +
-				"WHERE member_id = " + member_id + ";"
-			);
+		static boolean stringFitsShort(String str) {
+			return str != null && str.length() > 0 && str.length() <= SHORT_STRING_LENGTH && str.matches(REGEX_LATIN1);
 		}
-		
-		static void updateSex(Character sex, int member_id) throws SQLException {
-			processNonQuery(
-				"UPDATE client_record " + 
-				"SET sex = '" + Character.toUpperCase(sex) + "' " +
-				"WHERE member_id = " + member_id + ";"
-			);
+		static boolean stringFitsShorter(String str) {
+			return str != null && str.length() > 0 && str.length() <= SHORTER_STRING_LENGTH && str.matches(REGEX_LATIN1);
 		}
-		
-		static void updateEnrollmentDate(LocalDate enrollment_date, int member_id) throws SQLException {
-			processNonQuery(
-				"UPDATE client_record " +
-				"SET enrollment_date = '" + AppModel.toSQLDate(enrollment_date) + "' " +
-				"WHERE member_id = " + member_id + ";"
-			);
+		static boolean emailIsValid(String str) {
+			return str != null && stringFitsLong(str) && str.matches(REGEX_EMAIL);
 		}
-		
-		static void updateIsActive(Boolean is_active, int member_id) throws SQLException {
-			processNonQuery(
-				"UPDATE client_record " +
-				"SET is_active = '" + is_active + "' " +
-				"WHERE member_id = " + member_id + ";"
-			);
+		static boolean dateIsValid(String str) {
+			try {
+				return str != null && LocalDate.parse(str, DateTimeFormatter.ofPattern(DATE_FORMATTING)) != null;
+			} catch (DateTimeParseException dtpe) {
+				return false;
+			}
+		}
+		static boolean genderIsValid(char c) {
+			return c == 'M' || c == 'F';
 		}
 	}
 	
-	// For SELECT
-	ResultSet processQuery(String query) throws SQLException {
-		Statement s = null;
+	static Object[] readSQLFile(String sql_path) throws SQLException, IOException, InvalidPathException {
+		Path fp = null;
+		String content = null;
+		String[] statementSet;
+		Object[] result;
+		int i;
+		try {
+			fp = Paths.get(sql_path);
+		} catch (InvalidPathException ipe) {
+			ipe.printStackTrace();
+			return null;
+		}
+		try {
+			content = Files.readString(fp);
+		} catch (IOException ioe) {
+			ioe.printStackTrace();
+			return null;
+		}
+		statementSet = content
+			.replaceAll("(--.*)|((?s)\\/\\*.*?\\*\\/)", "") // Tanggalin lahat ng comments
+			.replaceAll("\\s+", " ") // Paltan lahat ng extra whitespaces ng isang space lang
+			.trim() // Trim trailing whitespaces sa unahan saka hulihan
+			.split("(?<=;)"); // Split statements before each ; (so kasama ung ;)
+		result = new Object[statementSet.length];
+		i = 0;
+		if (statementSet.length > 0) {
+			for (String s : statementSet) {
+				//System.out.println("[read] " + s);
+				if (!s.isEmpty())
+					if (s.toLowerCase().trim().startsWith("SELECT"))
+						result[i++] = processQuery(s);
+					else
+						result[i++] = processNonQuery(s);
+			}
+		}
+		return result;
+	}
+	
+	static ResultSet processQuery(String queryTemplate, Object... params) throws SQLException {
+		PreparedStatement ps = null;
 		ResultSet r = null;
+		int i;
 		if (null == modelConnection)
 			modelThrowError(AM_EMSG.AME_MAKECONNECTION);
 		try {
-			s = modelConnection.createStatement(ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY);
-			r = s.executeQuery(query);
-			open_queries.put(r, s);
+			ps = modelConnection.prepareStatement(queryTemplate,
+				ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY);
+			i = 1;
+			if (params != null)
+				for (Object o : params)
+					ps.setObject(i++, o);
+			r = ps.executeQuery();
+			open_queries.put(r, ps);
 			printSuccessLog(AM_SMSG.AMS_PROCSTATEMENT);
 			if (!r.next())
 				printSuccessLog(AM_SMSG.AMS_PROCSTATEMENT_EMPTY);
@@ -122,23 +128,26 @@ public class AppModel {
 		return r;
 	}
 	
-	// For CREATE, ALTER, INSERT INTO, DELETE, DROP, etc.
-	static int processNonQuery(String dml) throws SQLException {
-		Statement s = null;
-		int r = -1;
+	static int processNonQuery(String dmlTemplate, Object... params) throws SQLException {
+		PreparedStatement ps = null;
+		int i, r = 0;
 		if (null == modelConnection)
 			modelThrowError(AM_EMSG.AME_MAKECONNECTION);
 		try {
-			s = modelConnection.createStatement();
-			r = s.executeUpdate(dml);
+			ps = modelConnection.prepareStatement(dmlTemplate);
+			i = 1;
+			if (params != null)
+				for (Object o : params)
+					ps.setObject(i++, o);
+			r = ps.executeUpdate();
 			printSuccessLog(AM_SMSG.AMS_PROCSTATEMENT);
 		} catch (SQLException se) {
 			se.printStackTrace();
 			modelThrowError(AM_EMSG.AME_PROCSTATEMENT);
 		} finally {
-			if (s != null) {
+			if (ps != null) {
 				try {
-					s.close();
+					ps.close();
 				} catch (SQLException se) {
 					se.printStackTrace();
 				}
@@ -147,7 +156,7 @@ public class AppModel {
 		return r;
 	}
 	
-	DefaultTableModel makeTableModel(ResultSet rs, boolean releaseOnReturn) throws SQLException {
+	static DefaultTableModel makeTableModel(ResultSet rs, boolean releaseOnReturn) throws SQLException {
 		if (null == rs)
 			throw new NullPointerException("rs is null");
 		ResultSetMetaData rsmd = null;
@@ -186,7 +195,7 @@ public class AppModel {
 		return dtm;
 	}
 	
-	DefaultTableModel makeTableFromStatement(String query) throws SQLException {
+	static DefaultTableModel makeTableFromStatement(String query) throws SQLException {
 		ResultSet proc = null;
 		Integer procHash;
 		DefaultTableModel dtm = null;
@@ -205,7 +214,7 @@ public class AppModel {
 		return dtm;
 	}
 
-	void releaseResultSet(ResultSet rs) throws SQLException {
+	static void releaseResultSet(ResultSet rs) throws SQLException {
 		if (open_queries.get(rs) != null) {
 			try {
 				rs.close();
@@ -220,7 +229,7 @@ public class AppModel {
 		}
 	}
 	
-	void releaseAllResultSets() throws SQLException {
+	static void releaseAllResultSets() throws SQLException {
 		for (Map.Entry<ResultSet, Statement> e : open_queries.entrySet()) {
 			try {
 				releaseResultSet(e.getKey());
@@ -231,32 +240,33 @@ public class AppModel {
 		}
 	}
 	
-	private void enterDatabase() throws SQLException, ClassNotFoundException {
+	private static void enterDatabase() throws SQLException, IOException, ClassNotFoundException {
 		try {
 			Class.forName("com.mysql.cj.jdbc.Driver");
 			modelConnection = DriverManager.getConnection(JDBC_MAIN_ADDRESS, MYSQL_USERNAME, MYSQL_PASSWORD);
+			/*
 			processNonQuery("CREATE DATABASE IF NOT EXISTS `" + DATABASE_NAME + "`;");
 			processNonQuery("USE `" + DATABASE_NAME + "`;");
 			processNonQuery("CREATE TABLE IF NOT EXISTS `client_record` (" +
 				"member_id INT PRIMARY KEY AUTO_INCREMENT, " +
-				"first_name VARCHAR(50), " +
-				"last_name VARCHAR(50), " +
-				"middle_initial VARCHAR(10), " +
+				"first_name VARCHAR(" + SHORT_STRING_LENGTH + "), " +
+				"last_name VARCHAR(" + SHORT_STRING_LENGTH + "), " +
+				"middle_initial VARCHAR(" + SHORTER_STRING_LENGTH + "), " +
 				"birth_date DATE, " +
 				"is_employee BOOLEAN, " +
-				"sex VARCHAR(1), " +
+				"sex VARCHAR(" + CHAR_LENGTH + "), " +
 				"enrollment_date DATE, " +
 				"is_active BOOLEAN" +
 				");"
 			);
 			processNonQuery("CREATE TABLE IF NOT EXISTS `treatment_summary` (" +
 				"treatment_id INT PRIMARY KEY AUTO_INCREMENT, " +
-				"treatment_details VARCHAR(100)" +
+				"treatment_details VARCHAR(" + LONG_STRING_LENGTH + ")" +
 				");"
 			);
 			processNonQuery("CREATE TABLE IF NOT EXISTS `illness` (" +
 				"illness_id INT PRIMARY KEY AUTO_INCREMENT, " +
-				"illness_name VARCHAR(50), " +
+				"illness_name VARCHAR(" + SHORT_STRING_LENGTH + "), " +
 				"icd10_code INT" +
 				");"
 			);
@@ -270,34 +280,36 @@ public class AppModel {
 			);
 			processNonQuery("CREATE TABLE IF NOT EXISTS `company_policy_record` (" +
 				"plan_id INT PRIMARY KEY AUTO_INCREMENT, " +
-				"plan_name VARCHAR(50), " +
-				"coverage_type VARCHAR(50), " +
+				"plan_name VARCHAR(" + SHORT_STRING_LENGTH + "), " +
+				"coverage_type VARCHAR(" + SHORT_STRING_LENGTH + "), " +
 				"coverage_limit FLOAT, " +
 				"premium_amount FLOAT, " +
-				"payment_period VARCHAR(50), " +
-				"inclusion VARCHAR(50)" +
+				"payment_period VARCHAR(" + SHORT_STRING_LENGTH + "), " +
+				"inclusion VARCHAR(" + SHORT_STRING_LENGTH + ")" +
 				");"
 			);
 			processNonQuery("CREATE TABLE IF NOT EXISTS `hospital_record` (" +
 				"hospital_id INT PRIMARY KEY AUTO_INCREMENT, " +
-				"hospital_name VARCHAR(50), " +
-				"address VARCHAR(50), " +
-				"city VARCHAR(50), " +
+				"hospital_name VARCHAR(" + SHORT_STRING_LENGTH + "), " +
+				"address VARCHAR(" + SHORT_STRING_LENGTH + "), " +
+				"city VARCHAR(" + SHORT_STRING_LENGTH + "), " +
 				"zipcode INT, " +
 				"contact_no INT, " +
-				"email VARCHAR(50)" +
+				"email VARCHAR(" + LONG_STRING_LENGTH + ")" +
 				");"
 			);
 			processNonQuery("CREATE TABLE IF NOT EXISTS `doctor_record` (" +
 				"doctor_id INT PRIMARY KEY AUTO_INCREMENT, " +
-				"first_name VARCHAR(50), " +
-				"last_name VARCHAR(50), " +
-				"middle_initial VARCHAR(10), " +
-				"doctor_type VARCHAR(50), " +
+				"first_name VARCHAR(" + SHORT_STRING_LENGTH + "), " +
+				"last_name VARCHAR(" + SHORT_STRING_LENGTH + "), " +
+				"middle_initial VARCHAR(" + SHORTER_STRING_LENGTH + "), " +
+				"doctor_type VARCHAR(" + SHORT_STRING_LENGTH + "), " +
 				"contact_no INT, " +
-				"email VARCHAR(50)" +
+				"email VARCHAR(" + LONG_STRING_LENGTH + ")" +
 				");"
 			);
+			*/
+			readSQLFile("initialize_database.sql");
 			printSuccessLog(AM_SMSG.AMS_MAKECONNECTION);
 		} catch (SQLException se) {
 			se.printStackTrace();
@@ -340,4 +352,12 @@ public class AppModel {
 	private static final String DATABASE_ADDRESS = JDBC_MAIN_ADDRESS + "/" + DATABASE_NAME;
 	private static final String MYSQL_USERNAME = "root";
 	private static final String MYSQL_PASSWORD = "hajtubtyacty1Bgmail.com";
+	
+	static final int LONG_STRING_LENGTH = 254;
+	static final int SHORT_STRING_LENGTH = 127;
+	static final int SHORTER_STRING_LENGTH = 15;
+	static final int CHAR_LENGTH = 1;
+	static final String DATE_FORMATTING = "yyyy-MM-dd";
+	static final String REGEX_LATIN1 = "\\A[\\u0000-\\u00FF]*\\z";
+	static final String REGEX_EMAIL = "^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$";
 }
