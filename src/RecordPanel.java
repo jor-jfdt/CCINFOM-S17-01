@@ -25,6 +25,8 @@ public class RecordPanel extends BasePanel {
         southButtonPanel.add(addButton);
 
         createCRUDContent();
+
+        showCard("Clients");
     }
 
     @Override
