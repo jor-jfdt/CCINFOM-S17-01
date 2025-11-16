@@ -191,12 +191,12 @@ public class AppGUI extends JFrame {
     public void initializePanels() {
         createMainPanel();
         recordPanel = new RecordPanel();
-        //transactionPanel = new TransactionPanel();
+        transactionPanel = new TransactionPanel();
         //reportPanel = new ReportPanel();
 
         cardContainer.add(mainPanel, "main");
         cardContainer.add(recordPanel, "record");
-        //cardContainer.add(transactionPanel, "transaction");
+        cardContainer.add(transactionPanel, "transaction");
         //cardContainer.add(reportPanel, "report");
 
         this.add(cardContainer, BorderLayout.CENTER);
@@ -273,6 +273,7 @@ public class AppGUI extends JFrame {
     private JLabel applicationLogoLabel;
     private JPanel mainPanel;
     private RecordPanel recordPanel;
+    private TransactionPanel transactionPanel;
     //private TransactionPanel transactionPanel;
     //private ReportPanel reportPanel;
     private JButton[] menuButtons;
