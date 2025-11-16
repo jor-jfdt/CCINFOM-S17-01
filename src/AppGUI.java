@@ -258,6 +258,14 @@ public class AppGUI extends JFrame {
         return mainPanel;
     }
 
+    public RecordPanel getRecordPanel() {
+        return recordPanel;
+    }
+    public TransactionPanel getTransactionPanel() {
+        return transactionPanel;
+    }
+    // public ReportPanel getReportPanel() { return reportPanel; }
+
     public JButton[] getMenuButtons() {
         return menuButtons;
     }
@@ -266,6 +274,9 @@ public class AppGUI extends JFrame {
         for (JButton button : menuButtons) {
             button.addActionListener(listener);
         }
+        recordPanel.addBackButtonListener(listener);
+        transactionPanel.addBackButtonListener(listener);
+        //reportPanel.addBackButtonListener(listener);
     }
 
     private final JPanel cardContainer;

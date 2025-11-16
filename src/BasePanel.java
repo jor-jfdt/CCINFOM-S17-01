@@ -272,6 +272,10 @@ public abstract class BasePanel extends BackgroundPanel {
         leftPanel.repaint();
     }
 
+    public JButton getBackButton() {
+        return backButton;
+    }
+
     protected String activePanelKey;
     protected Map<String, JTable> tableMap;
     protected Map<String, String[]> header_columns;

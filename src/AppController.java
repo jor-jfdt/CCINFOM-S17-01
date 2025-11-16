@@ -23,6 +23,11 @@ public class AppController implements ActionListener {
                 }
             }
         }
+        //later on add Report Panel back button controller
+        if (e.getSource() == appGUI.getRecordPanel().getBackButton() || e.getSource() == appGUI.getTransactionPanel().getBackButton()) {
+            System.out.println("Back to Main Menu");
+            appGUI.showPanel("main");
+        }
     }
     private final AppGUI appGUI;
     private final AppModel appModel;
