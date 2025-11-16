@@ -56,34 +56,29 @@ public abstract class BasePanel extends BackgroundPanel {
         leftPanel.setOpaque(false);
         leftPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 
-        JPanel leftContainer = new JPanel(new BorderLayout());
+        leftContainer = new JPanel(new BorderLayout());
         leftContainer.setOpaque(false);
 
         hideButton = createHideButton();
 
         JSeparator separator = new JSeparator(SwingConstants.VERTICAL);
-        JPanel eastPanel = new JPanel(new BorderLayout());
+        eastPanel = new JPanel(new BorderLayout());
         eastPanel.setOpaque(false);
         eastPanel.add(separator, BorderLayout.WEST);
         eastPanel.add(hideButton, BorderLayout.CENTER);
 
+        //Made this into a class variable so that it can be accessed in other methods
         leftContainer.add(leftPanel, BorderLayout.CENTER);
         leftContainer.add(eastPanel, BorderLayout.EAST);
 
         leftContainer.setPreferredSize(new Dimension(1, 1));
 
-        gbc.gridx = 0;
-        gbc.gridy = 1;
-        gbc.gridwidth = 1;
-        gbc.weightx = 0.4;
-        gbc.weighty = 0.9;
-        gbc.fill = GridBagConstraints.BOTH;
-        gbc.insets = new Insets(10, 10, 10, 5);
+        gbcLeftConstraints(gbc);
         add(leftContainer, gbc);
     }
 
     private JButton createHideButton() {
-        JButton button = new JButton("◀");
+        JButton button = new JButton("<");
 
         button.setFont(new Font("Arial Unicode MS", Font.PLAIN, 16));
         button.setForeground(new Color(0, 105, 55));
@@ -166,13 +161,7 @@ public abstract class BasePanel extends BackgroundPanel {
 
         rightPanel.setPreferredSize(new Dimension(1, 1));
 
-        gbc.gridx = 1;
-        gbc.gridy = 1;
-        gbc.gridwidth = 1;
-        gbc.weightx = 0.6;
-        gbc.weighty = 0.9;
-        gbc.fill = GridBagConstraints.BOTH;
-        gbc.insets = new Insets(10, 5, 10, 10);
+        gbcRightConstraints(gbc);
         add(rightPanel, gbc);
     }
 
@@ -271,11 +260,90 @@ public abstract class BasePanel extends BackgroundPanel {
         leftPanel.revalidate();
         leftPanel.repaint();
     }
+    public void toggleOptionsVisibility() {
+        optionsVisible = !optionsVisible;
+        GridBagLayout layout = (GridBagLayout) getLayout();
+        GridBagConstraints gbcLeft = layout.getConstraints(leftContainer);
+        GridBagConstraints gbcRight = layout.getConstraints(rightPanel);
+
+        if (!optionsVisible) {
+            leftPanel.setVisible(false);
+            //balik muna sa zero dimension
+            leftPanel.setPreferredSize(new Dimension(0,0));
+
+            //remove eastPanel(which holds the hide button)
+            // move it to the far left side
+            leftContainer.remove(eastPanel);
+            leftContainer.add(hideButton, BorderLayout.WEST);
+
+            Dimension hideButtonSize = new Dimension(40, 40);
+            //unting space para sa seperator yung 4
+            leftContainer.setPreferredSize(new Dimension(hideButtonSize.width+ 4, hideButtonSize.height));
+            gbcLeft.weightx = 0.0;
+            gbcRight.weightx = 1.0;
+
+            hideButton.setText(">");
+
+        } else {
+            leftContainer.remove(hideButton);
+            eastPanel.add(hideButton, BorderLayout.CENTER);
+
+            leftPanel.setVisible(true);
+            leftPanel.setPreferredSize(null);
+            leftContainer.setPreferredSize(new Dimension(1, 1));
+
+            leftContainer.add(leftPanel, BorderLayout.CENTER);
+            leftContainer.add(eastPanel, BorderLayout.EAST);
+
+            gbcLeftConstraints(gbcLeft);
+
+            gbcRightConstraints(gbcRight);
+            hideButton.setText("<");
+        }
+        layout.setConstraints(leftContainer, gbcLeft);
+        layout.setConstraints(rightPanel, gbcRight);
+
+        if (options != null) {
+            for (JButton option : options) {
+                option.setVisible(optionsVisible);
+            }
+        }
+        updateComponent();
+        leftContainer.revalidate();
+        leftContainer.repaint();
+        revalidate();
+        repaint();
+    }
+
+    private void gbcRightConstraints(GridBagConstraints gbcRight) {
+        gbcRight.gridx = 1;
+        gbcRight.gridy = 1;
+        gbcRight.gridwidth = 1;
+        gbcRight.weightx = 0.6;
+        gbcRight.weighty = 0.9;
+        gbcRight.fill = GridBagConstraints.BOTH;
+        gbcRight.insets = new Insets(10, 5, 10, 10);
+    }
+
+    private void gbcLeftConstraints(GridBagConstraints gbcLeft) {
+        gbcLeft.gridx = 0;
+        gbcLeft.gridy = 1;
+        gbcLeft.gridwidth = 1;
+        gbcLeft.weightx = 0.4;
+        gbcLeft.weighty = 0.9;
+        gbcLeft.fill = GridBagConstraints.BOTH;
+        gbcLeft.insets = new Insets(10, 10, 10, 5);
+    }
+
+    public JButton getHideButton() {
+        return hideButton;
+    }
 
     public JButton getBackButton() {
         return backButton;
     }
 
+    protected  boolean optionsVisible = true;
     protected String activePanelKey;
     protected Map<String, JTable> tableMap;
     protected Map<String, String[]> header_columns;
@@ -283,6 +351,8 @@ public abstract class BasePanel extends BackgroundPanel {
     protected String title;
     protected JLabel titleLabel;
     protected JPanel leftPanel;
+    protected JPanel leftContainer;
+    protected JPanel eastPanel;
     protected JPanel rightPanel;
     protected JButton[] options;
     protected JButton hideButton;

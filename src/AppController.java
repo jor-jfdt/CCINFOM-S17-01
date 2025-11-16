@@ -28,6 +28,14 @@ public class AppController implements ActionListener {
             System.out.println("Back to Main Menu");
             appGUI.showPanel("main");
         }
+        if (e.getSource() == appGUI.getRecordPanel().getHideButton()) {
+            System.out.println("Hide Button in Record Pressed");
+            appGUI.getRecordPanel().toggleOptionsVisibility();
+        }
+        else if (e.getSource() == appGUI.getTransactionPanel().getHideButton()) {
+            System.out.println("Hide Button in Transaction Pressed");
+            appGUI.getTransactionPanel().toggleOptionsVisibility();
+        }
     }
     private final AppGUI appGUI;
     private final AppModel appModel;
