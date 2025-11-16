@@ -1,5 +1,6 @@
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.ActionListener;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
 import javax.imageio.ImageIO;
@@ -47,7 +48,7 @@ public class AppGUI extends JFrame {
         });
 
         initializePanels();
-        showPanel("main");
+        showPanel("record");
 
         this.setPreferredSize(new Dimension(screenWidth, screenHeight));
         this.pack();
@@ -140,7 +141,6 @@ public class AppGUI extends JFrame {
         mainPanel = new BackgroundPanel("app_wallpaper.png");
         menuButtons = new JButton[3];
 
-        // Load logo
         try {
             BufferedImage logoImage = ImageIO.read(Objects.requireNonNull(
                     getClass().getResourceAsStream("/resources/hmo_logo.png")
@@ -156,7 +156,6 @@ public class AppGUI extends JFrame {
         mainPanel.setLayout(new BoxLayout(mainPanel, BoxLayout.Y_AXIS));
         mainPanel.add(Box.createVerticalGlue());
 
-        // Add logo above title
         mainPanel.add(applicationLogoLabel);
         applicationLogoLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
         mainPanel.add(Box.createRigidArea(new Dimension(0, getHeight() / 40))); // Spacing between logo and title
@@ -213,10 +212,10 @@ public class AppGUI extends JFrame {
             case "record":
                 cardLayout.show(cardContainer, "record");
                 break;
-            case "transaction": // Added
+            case "transaction":
                 cardLayout.show(cardContainer, "transaction");
                 break;
-            case "report": // Added
+            case "report":
                 cardLayout.show(cardContainer, "report");
                 break;
         }
@@ -261,6 +260,12 @@ public class AppGUI extends JFrame {
 
     public JButton[] getMenuButtons() {
         return menuButtons;
+    }
+
+    public void addMenuButtonListener(ActionListener listener) {
+        for (JButton button : menuButtons) {
+            button.addActionListener(listener);
+        }
     }
 
     private final JPanel cardContainer;
