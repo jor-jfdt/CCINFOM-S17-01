@@ -24,13 +24,28 @@ public abstract class BasePanel extends BackgroundPanel {
 
     private void addTitleSection(GridBagConstraints gbc) {
         titleLabel = new JLabel(title, SwingConstants.CENTER);
+        backButton = new JButton("◀");
         updateFont();
+
+        backButton.setFont(new Font("Arial Unicode MS", Font.PLAIN, 16));
+        backButton.setForeground(new Color(0, 105, 55));
+
+        backButton.setOpaque(false);
+        backButton.setBorderPainted(false);
+        backButton.setFocusPainted(false);
 
         gbc.gridx = 0;
         gbc.gridy = 0;
-        gbc.gridwidth = 2;
+        gbc.gridwidth = 0;
+        gbc.anchor = GridBagConstraints.WEST;
+        add(backButton, gbc);
+
+        gbc.gridx = 1;
+        gbc.gridy = 0;
+        gbc.gridwidth = 1;
         gbc.weightx = 1.0;
-        gbc.weighty = 0.2;
+        gbc.weighty = 0.1;
+        gbc.anchor = GridBagConstraints.CENTER;
         gbc.insets = new Insets(10, 0, 20, 0);
         add(titleLabel, gbc);
     }
@@ -44,7 +59,6 @@ public abstract class BasePanel extends BackgroundPanel {
         JPanel leftContainer = new JPanel(new BorderLayout());
         leftContainer.setOpaque(false);
 
-        JScrollPane leftScrollPane = createScrollPane(leftPanel);
         hideButton = createHideButton();
 
         JSeparator separator = new JSeparator(SwingConstants.VERTICAL);
@@ -53,29 +67,19 @@ public abstract class BasePanel extends BackgroundPanel {
         eastPanel.add(separator, BorderLayout.WEST);
         eastPanel.add(hideButton, BorderLayout.CENTER);
 
-        leftContainer.add(leftScrollPane, BorderLayout.CENTER);
+        leftContainer.add(leftPanel, BorderLayout.CENTER);
         leftContainer.add(eastPanel, BorderLayout.EAST);
 
-        // GridBagConstraints for the main panel
+        leftContainer.setPreferredSize(new Dimension(1, 1));
+
         gbc.gridx = 0;
         gbc.gridy = 1;
         gbc.gridwidth = 1;
-        gbc.weightx = 0.2;
-        gbc.weighty = 0.8;
+        gbc.weightx = 0.4;
+        gbc.weighty = 0.9;
         gbc.fill = GridBagConstraints.BOTH;
         gbc.insets = new Insets(10, 10, 10, 5);
         add(leftContainer, gbc);
-    }
-
-    private JScrollPane createScrollPane(JPanel panel) {
-        JScrollPane scrollPane = new JScrollPane(panel);
-        scrollPane.setOpaque(false);
-        scrollPane.getViewport().setOpaque(false);
-        scrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
-        scrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
-        scrollPane.setBorder(BorderFactory.createEmptyBorder());
-        scrollPane.getVerticalScrollBar().setUnitIncrement(16);
-        return scrollPane;
     }
 
     private JButton createHideButton() {
@@ -88,8 +92,8 @@ public abstract class BasePanel extends BackgroundPanel {
         button.setBorderPainted(false);
         button.setFocusPainted(false);
 
-        button.setPreferredSize(new Dimension(30, 40));
-        button.setMinimumSize(new Dimension(30, 30));
+        button.setPreferredSize(new Dimension(40, 40));
+        button.setMinimumSize(new Dimension(40, 40));
         return button;
     }
 
@@ -128,9 +132,13 @@ public abstract class BasePanel extends BackgroundPanel {
         button.putClientProperty("cardKey", key);
 
         GridBagConstraints gbc = new GridBagConstraints();
+        gbc.gridx = 0;
         gbc.gridy = index;
         gbc.weightx = 1.0;
+        gbc.weighty = 0.0;
+        gbc.gridwidth = 1;
         gbc.fill = GridBagConstraints.HORIZONTAL;
+        gbc.anchor = GridBagConstraints.NORTH;
 
         gbc.insets = new Insets(0, 0, (index < options.length - 1) ? 10 : 0, 0);
 
@@ -156,11 +164,13 @@ public abstract class BasePanel extends BackgroundPanel {
 
         initializeEmptyCard();
 
+        rightPanel.setPreferredSize(new Dimension(1, 1));
+
         gbc.gridx = 1;
         gbc.gridy = 1;
         gbc.gridwidth = 1;
-        gbc.weightx = 0.8;
-        gbc.weighty = 0.8;
+        gbc.weightx = 0.6;
+        gbc.weighty = 0.9;
         gbc.fill = GridBagConstraints.BOTH;
         gbc.insets = new Insets(10, 5, 10, 10);
         add(rightPanel, gbc);
@@ -233,6 +243,10 @@ public abstract class BasePanel extends BackgroundPanel {
         }
     }
 
+    public void addBackButtonListener(ActionListener listener) {
+        backButton.addActionListener(listener);
+    }
+
     protected void updateComponent() {
         if (options != null) {
             Dimension buttonSize = UITools.getLeftPanelButtonSize();
@@ -240,8 +254,9 @@ public abstract class BasePanel extends BackgroundPanel {
 
             for (JButton option : options) {
                 option.setFont(buttonFont);
-                Dimension prefSize = new Dimension(100, buttonSize.height);
-                option.setPreferredSize(prefSize);
+                option.setPreferredSize(null);
+                option.setMinimumSize(new Dimension(0, buttonSize.height));
+                option.setMaximumSize(new Dimension(Integer.MAX_VALUE, buttonSize.height));
             }
         }
 
@@ -267,6 +282,7 @@ public abstract class BasePanel extends BackgroundPanel {
     protected JPanel rightPanel;
     protected JButton[] options;
     protected JButton hideButton;
+    protected JButton backButton;
 
     protected CardLayout rightCardLayout;
     protected JPanel centerCardPanel;

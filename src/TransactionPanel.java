@@ -74,7 +74,7 @@ public class TransactionPanel extends BasePanel {
         panelMap.put("Payout to Doctor", createCRUDPanel("doctor_payout",
                 "Search Payout by Doctor Name:",
                 header_columns.get("payout")));
-        panelMap.put("Letter of Authorization", createCRUDPanel("loa_transaction",
+        panelMap.put("Request LOA", createCRUDPanel("loa_transaction",
                 "Search LOA by Client Name:",
                 header_columns.get("loa")));
 
