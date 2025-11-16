@@ -1,53 +1,96 @@
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.ActionListener;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
-/*
 public class TransactionPanel extends BasePanel {
     public TransactionPanel() {
         super("Manage Transaction", "app_wallpaper.png");
 
-        options = new JButton[7];
-        options[0] = new JButton("Buying of Company Policy Plan");
-        options[1] = new JButton("Client Payment of Premium");
-        options[2] = new JButton("Consultation with Doctor");
-        options[3] = new JButton("Hospitalization");
-        options[4] = new JButton("Payout to Hospital");
-        options[5] = new JButton("Payout to Doctor");
-        options[6] = new JButton("Request of Letter of Authorization");
+        addButton = new JButton("Add Transaction");
+        updateButton = new JButton("Update Transaction");
 
-        for (int i = 0; i < options.length; i++) {
-            leftPanel.add(options[i]);
-            if (i < options.length - 1) {
-                leftPanel.add(Box.createRigidArea(new Dimension(0, 10)));
-            }
-        }
+        UITools.styleButton(addButton);
+        UITools.styleButton(updateButton);
 
-        updateComponent();
+        southButtonPanel.setLayout(new BoxLayout(southButtonPanel, BoxLayout.X_AXIS));
+        southButtonPanel.add(Box.createHorizontalGlue());
+        southButtonPanel.add(updateButton);
+        southButtonPanel.add(Box.createHorizontalGlue());
+        southButtonPanel.add(addButton);
+
+        createTransactionOptions();
     }
 
     @Override
-    protected void updateComponent() {
-        if (options != null) {
-            int leftPanelWidth = (int)(AppGUI.screenWidth * 0.3);
-            int hideButtonWidth = 25; // Account for hide button width
-            int availableWidth = leftPanelWidth - hideButtonWidth - 60; // Extra margin for padding
-            int buttonHeight = (int)(AppGUI.screenHeight * 0.08); // Slightly smaller height
-            Dimension buttonSize = new Dimension(availableWidth, buttonHeight);
+    protected void createHeaderColumns() {
+        header_columns = new HashMap<>();
 
-            Font buttonFont = new Font("Algerian", Font.PLAIN,
-                    Math.max(AppGUI.screenWidth / 100, AppGUI.screenHeight / 60));
+        header_columns.put("client_policy",
+                new String[] { "client_plan_id", "policy_id", "member_id", "preexisting_illness", "effective_Date",
+                "expiry_date", "stats" }
+        );
 
-            for (JButton option : options) {
-                option.setPreferredSize(buttonSize);
-                option.setMaximumSize(buttonSize);
-                option.setMinimumSize(buttonSize);
-                option.setFont(buttonFont);
-                option.setAlignmentX(Component.CENTER_ALIGNMENT);
-            }
-        }
-        leftPanel.revalidate();
-        leftPanel.repaint();
+        header_columns.put("payment",
+                new String[] { "payment_id", "client_plan_id", "amount", "payment_date", "payment_method", "status" }
+        );
+
+        header_columns.put("claim",
+                new String[] { "claim_id", "client_plan_id", "illness_id", "claim_date", "hospital_id",
+                        "doctor_id", "service_date", "service_type", "covered_amount", "status" }
+        );
+
+        header_columns.put("payout",
+                new String[] { "payout_id", "claim_id", "client_plan_id", "payout_date", "payout_amount", "status" }
+        );
+
+        header_columns.put("loa", //valid until is good also
+                new String[] { "request_id", "client_plan_id", "hospital_id", "doctor_id", "illness_id",
+                        "service_type","valid_until", "status" }
+        );
     }
+
+    private void createTransactionOptions() {
+        Map<String, JPanel> panelMap = new LinkedHashMap<>();
+        createHeaderColumns();
+
+        panelMap.put("Buy Policy", createCRUDPanel("client_policy",
+                "Search Transaction by Client Name:",
+                header_columns.get("client_policy")));
+        panelMap.put("Payment of Premium", createCRUDPanel("payment",
+                "Search Payment by Client Name:",
+                header_columns.get("payment")));
+        panelMap.put("Doctor Consultation", createCRUDPanel("consultation",
+                "Search Consultation by Client Name:",
+                header_columns.get("claim")));
+        panelMap.put("Hospitalization", createCRUDPanel("hospitalization",
+                "Search Hospitalization by Client Name:",
+                header_columns.get("claim")));
+        panelMap.put("Payout to Hospital", createCRUDPanel("hospital_payout",
+                "Search Payout by Hospital Name:",
+                header_columns.get("payout")));
+        panelMap.put("Payout to Doctor", createCRUDPanel("doctor_payout",
+                "Search Payout by Doctor Name:",
+                header_columns.get("payout")));
+        panelMap.put("Letter of Authorization", createCRUDPanel("loa_transaction",
+                "Search LOA by Client Name:",
+                header_columns.get("loa")));
+
+        populateCardLayout(panelMap);
+    }
+
+    public void addAddButtonListener(ActionListener listener) {
+        addButton.addActionListener(listener);
+    }
+
+    public void addUpdateButtonListener(ActionListener listener) {
+        updateButton.addActionListener(listener);
+    }
+
+    private JButton addButton;
+    private JButton updateButton;
 }
-*/
+
 

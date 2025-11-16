@@ -60,7 +60,7 @@ public abstract class BasePanel extends BackgroundPanel {
         gbc.gridx = 0;
         gbc.gridy = 1;
         gbc.gridwidth = 1;
-        gbc.weightx = 0.1;
+        gbc.weightx = 0.2;
         gbc.weighty = 0.8;
         gbc.fill = GridBagConstraints.BOTH;
         gbc.insets = new Insets(10, 10, 10, 5);
@@ -159,7 +159,7 @@ public abstract class BasePanel extends BackgroundPanel {
         gbc.gridx = 1;
         gbc.gridy = 1;
         gbc.gridwidth = 1;
-        gbc.weightx = 0.9;
+        gbc.weightx = 0.8;
         gbc.weighty = 0.8;
         gbc.fill = GridBagConstraints.BOTH;
         gbc.insets = new Insets(10, 5, 10, 10);
@@ -211,6 +211,8 @@ public abstract class BasePanel extends BackgroundPanel {
         leftPanel.repaint();
     }
 
+    protected abstract void createHeaderColumns();
+
     public void updateFont() {
         titleLabel.setFont(UITools.getTitleFont());
         titleLabel.setForeground(UITools.getPrimaryColor());
@@ -231,11 +233,33 @@ public abstract class BasePanel extends BackgroundPanel {
         }
     }
 
-    protected abstract void createCRUDContent();
-    protected abstract void updateComponent();
+    protected void updateComponent() {
+        if (options != null) {
+            Dimension buttonSize = UITools.getLeftPanelButtonSize();
+            Font buttonFont = UITools.getLeftPanelButtonFont();
+
+            for (JButton option : options) {
+                option.setFont(buttonFont);
+                Dimension prefSize = new Dimension(100, buttonSize.height);
+                option.setPreferredSize(prefSize);
+            }
+        }
+
+        if (hideButton != null) {
+            Dimension hideButtonSize = UITools.getHideButtonSize();
+            hideButton.setPreferredSize(hideButtonSize);
+            hideButton.setMinimumSize(hideButtonSize);
+            hideButton.setMaximumSize(hideButtonSize);
+            hideButton.setFont(new Font("Arial Unicode MS", Font.PLAIN, 16));
+        }
+
+        leftPanel.revalidate();
+        leftPanel.repaint();
+    }
 
     protected String activePanelKey;
     protected Map<String, JTable> tableMap;
+    protected Map<String, String[]> header_columns;
 
     protected String title;
     protected JLabel titleLabel;

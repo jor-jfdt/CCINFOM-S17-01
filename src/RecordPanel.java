@@ -1,6 +1,7 @@
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionListener;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
@@ -27,69 +28,64 @@ public class RecordPanel extends BasePanel {
     }
 
     @Override
-    protected void createCRUDContent() {
+    protected void createHeaderColumns() {
+        header_columns = new HashMap<>();
+
+        header_columns.put("clients",
+                new String[] { "client_id", "first_name", "last_name", "middle_initial",
+                        "birth_date", "is_employee", "sex", "is_active" });
+
+        header_columns.put("policy",
+                new String[] { "policy_id", "policy_name", "coverage_type", "coverage_limit",
+                        "payment_period", "inclusion" });
+
+        header_columns.put("hospital",
+                new String[] { "hospital_id", "hospital_name", "address",
+                        "city", "zipcode", "contact_no", "email" });
+
+        header_columns.put("doctor",
+                new String[] { "doctor_id", "first_name", "last_name", "middle_initial", "doctor_type",
+                        "contact_no", "email" });
+
+        header_columns.put("illness",
+                new String[] { "illness_id", "illness_name", "icd10_code" });
+    }
+
+    private void createCRUDContent() {
         Map<String, JPanel> panelMap = new LinkedHashMap<>();
+        createHeaderColumns();
 
         panelMap.put("Clients", createCRUDPanel(
                 "clients",
                 "Search Client by Name:",
-                new String[] { "client_id", "first_name", "last_name", "middle_initial",
-                               "birth_date", "is_employee", "sex", "is_active" }
+                header_columns.get("clients")
         ));
 
         panelMap.put("Policy", createCRUDPanel(
                 "policy",
                 "Search Policy by Name:",
-                new String[] { "policy_id", "policy_name", "coverage_type", "coverage_limit",
-                               "payment_period", "inclusion"}
+                header_columns.get("policy")
         ));
 
         panelMap.put("Hospital", createCRUDPanel(
                 "hospital",
                 "Search Hospital by Name:",
-                new String[] { "hospital_id", "hospital_name", "address",
-                               "city", "zipcode", "contact_no", "email" }
+                header_columns.get("hospital")
         ));
 
         panelMap.put("Doctor", createCRUDPanel(
                 "doctor",
                 "Search Doctor by Name:",
-                new String[] { "doctor_id", "first_name", "last_name", "middle_initial", "doctor_type",
-                               "contact_no", "email" }
+                header_columns.get("doctor")
         ));
 
         panelMap.put("Illness", createCRUDPanel(
                 "illness",
                 "Search Illness by Name:",
-                new String[] { "illness_id", "illness_name", "icd10_code" }
+                header_columns.get("illness")
         ));
 
         populateCardLayout(panelMap);
-    }
-
-    @Override
-    protected void updateComponent() {
-        if (options != null) {
-            Dimension buttonSize = UITools.getLeftPanelButtonSize();
-            Font buttonFont = UITools.getLeftPanelButtonFont();
-
-            for (JButton option : options) {
-                option.setFont(buttonFont);
-                Dimension prefSize = new Dimension(100, buttonSize.height);
-                option.setPreferredSize(prefSize);
-            }
-        }
-
-        if (hideButton != null) {
-            Dimension hideButtonSize = UITools.getHideButtonSize();
-            hideButton.setPreferredSize(hideButtonSize);
-            hideButton.setMinimumSize(hideButtonSize);
-            hideButton.setMaximumSize(hideButtonSize);
-            hideButton.setFont(new Font("Arial Unicode MS", Font.PLAIN, 16));
-        }
-
-        leftPanel.revalidate();
-        leftPanel.repaint();
     }
 
     public void addAddButtonListener(ActionListener listener) {
