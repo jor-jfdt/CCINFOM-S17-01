@@ -41,7 +41,7 @@ public class _Driver {
 		);
 		*/
 		DefaultTableModel dtm = model.makeTableModel(model.getTableEntries("client", "*"));
-		TableRowSorter trs = model.makeTableRowSorter(dtm);
+		TableRowSorter trs = model.filterOnTableRowSorter(dtm, "19", "birth_date");
 		model.closeDatabase();
 		JFrame jf = new JFrame("Sample table");
 		JTable jt = new JTable(dtm);

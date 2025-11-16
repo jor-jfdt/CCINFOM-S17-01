@@ -2,9 +2,11 @@ import java.sql.*;
 import java.util.*;
 import java.time.*;
 import java.time.format.*;
+import javax.swing.RowFilter;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableRowSorter;
 import java.util.stream.Stream;
+import java.util.stream.IntStream;
 import java.util.stream.Collectors;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ConcurrentHashMap;
@@ -14,11 +16,17 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.nio.file.Path;
 public class AppModel {
+	// ---------------------------------------------------------------
+	// ---------------------- Public Attributes ----------------------
+	// ---------------------------------------------------------------
 	// MySQL port
 	static final String JDBC_MAIN_ADDRESS = "jdbc:mysql://localhost:3306/";
 	static enum AM_SMSG { AMS_MAKECONNECTION, AMS_PROCSTATEMENT, AMS_PROCSTATEMENT_EMPTY }
 	static enum AM_EMSG { AME_MAKECONNECTION, AME_CONNECTION_CLOSED, AME_PROCSTATEMENT, AME_JCONNECTOR }
 	
+	// ---------------------------------------------------------------
+	// ------------------------- Constructor -------------------------
+	// ---------------------------------------------------------------
 	AppModel(String database_name, String username, String password) throws SQLException, ClassNotFoundException {
 		try {
 			Class.forName("com.mysql.cj.jdbc.Driver");
@@ -30,6 +38,9 @@ public class AppModel {
 		MYSQL_PASSWORD = password;
 	}
 	
+	// ---------------------------------------------------------------
+	// ---------------- Utilities for checking input -----------------
+	// ---------------------------------------------------------------
 	static class SQLUtils {
 		static String makeSQLTemplateUpdateSetWhere(String table_name, String set_name, String where_name) {
 			if (null == table_name || null == set_name || null == where_name || !assessAllIdentifiers(table_name, set_name, where_name))
@@ -72,12 +83,23 @@ public class AppModel {
 		static boolean stringFitsShorter(String str) {
 			return str != null && str.length() > 0 && str.length() <= SHORTER_STRING_LENGTH && str.matches(REGEX_LATIN1);
 		}
+		static boolean stringFitsICD10(String str) {
+			return str != null && str.length() >= ICD10_STRING_MIN_LENGTH &&
+				str.length() <= ICD10_STRING_MAX_LENGTH && str.matches(REGEX_LATIN1);
+		}
 		static boolean emailIsValid(String str) {
 			return str != null && stringFitsLong(str) && str.matches(REGEX_EMAIL);
 		}
 		static boolean dateIsValid(String str) {
 			try {
 				return str != null && LocalDate.parse(str, DateTimeFormatter.ofPattern(DATE_FORMATTING)) != null;
+			} catch (DateTimeParseException dtpe) {
+				return false;
+			}
+		}
+		static boolean datetimeIsValid(String str) {
+			try {
+				return str != null && LocalDate.parse(str, DateTimeFormatter.ofPattern(DATETIME_FORMATTING)) != null;
 			} catch (DateTimeParseException dtpe) {
 				return false;
 			}
@@ -98,14 +120,73 @@ public class AppModel {
 		static final int LONG_STRING_LENGTH = 254;
 		static final int SHORT_STRING_LENGTH = 127;
 		static final int SHORTER_STRING_LENGTH = 15;
+		static final int ICD10_STRING_MIN_LENGTH = 3;
+		static final int ICD10_STRING_MAX_LENGTH = 3;
 		static final int CHAR_LENGTH = 1;
 		static final String DATE_FORMATTING = "yyyy-MM-dd";
+		static final String DATETIME_FORMATTING = "yyyy-MM-dd HH:mm:ss";
 		static final String REGEX_LATIN1 = "\\A[\\u0000-\\u00FF]*\\z";
 		static final String REGEX_EMAIL = "^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$";
 		private static final String REGEX_SQL_IDENTIFIER = "\\*|^[a-zA-Z_]\\w*$";
-		private static final String REGEX_SQL_NON_NESTED_FUNCTION = "^[A-Za-z_]*\\(\\s*([\\w.]+(\\s*,\\s*[\\w.]+)*)?\\s*\\)$";
 	}
 	
+	// ---------------------------------------------------------------
+	// ------------------------- For JTables -------------------------
+	// ---------------------------------------------------------------
+	DefaultTableModel makeTableModel(List<Map<String, Object>> maprep) {
+		DefaultTableModel dtm = new DefaultTableModel();
+		Map<String, Object> basis = maprep.get(0);
+		Object[] v;
+		int i, j;
+		for (String k : basis.keySet())
+			dtm.addColumn(k);
+		if (maprep.size() <= 1)
+			return dtm;
+		for (i = 1; i < maprep.size(); i++) {
+			v = new Object[basis.size()];
+			j = 0;
+			for (String k : basis.keySet()) {
+				//System.out.println(basis.get(k));
+				v[j++] = maprep.get(i).get(k);
+			}
+			dtm.addRow(v);
+			v = null;
+		}
+		basis = null;
+		return dtm;
+	}
+	
+	TableRowSorter<DefaultTableModel> makeTableRowSorter(DefaultTableModel dtm) {
+		TableRowSorter<DefaultTableModel> trs = new TableRowSorter<>(dtm);
+		for (int i = 0; i < dtm.getColumnCount(); i++)
+			trs.setComparator(i, DEFAULT_COMPARATOR);
+		return trs;
+	}
+	
+	TableRowSorter<DefaultTableModel> filterOnTableRowSorter(DefaultTableModel dtm, String keyword, String... target_columns) {
+		if (null == keyword || keyword.isEmpty())
+			return makeTableRowSorter(dtm);
+		TableRowSorter<DefaultTableModel> trs = makeTableRowSorter(dtm);
+		List<String> tc = Arrays.asList(target_columns);
+		List<Integer> targets;
+		int[] varargable_targets;
+		if (null == target_columns) {
+			targets = IntStream.rangeClosed(0, dtm.getColumnCount() - 1).boxed()
+				.collect(Collectors.toList());
+		} else {
+			targets = new ArrayList<>();
+			for (int i = 0; i < dtm.getColumnCount(); i++)
+				if (tc.contains(dtm.getColumnName(i)))
+					targets.add(i);
+		}
+		varargable_targets = Arrays.stream(targets.toArray(new Integer[0])).mapToInt(Integer::intValue).toArray();
+		trs.setRowFilter(RowFilter.regexFilter("(?i)" + keyword, varargable_targets));
+		return trs;
+	}
+	
+	// ---------------------------------------------------------------
+	// --------------------------- C R U D ---------------------------
+	// ---------------------------------------------------------------
 	Object[] readSQLFile(String sql_path) throws SQLException, IOException, InvalidPathException {
 		Path fp = null;
 		String content = null;
@@ -207,36 +288,6 @@ public class AppModel {
 		return r;
 	}
 	
-	DefaultTableModel makeTableModel(List<Map<String, Object>> maprep) {
-		DefaultTableModel dtm = new DefaultTableModel();
-		Map<String, Object> basis = maprep.get(0);
-		Object[] v;
-		int i, j;
-		for (String k : basis.keySet())
-			dtm.addColumn(k);
-		if (maprep.size() <= 1)
-			return dtm;
-		for (i = 1; i < maprep.size(); i++) {
-			v = new Object[basis.size()];
-			j = 0;
-			for (String k : basis.keySet()) {
-				//System.out.println(basis.get(k));
-				v[j++] = maprep.get(i).get(k);
-			}
-			dtm.addRow(v);
-			v = null;
-		}
-		basis = null;
-		return dtm;
-	}
-	
-	TableRowSorter makeTableRowSorter(DefaultTableModel dtm) {
-		TableRowSorter trs = new TableRowSorter(dtm);
-		for (int i = 0; i < dtm.getColumnCount(); i++)
-			trs.setComparator(i, DEFAULT_COMPARATOR);
-		return trs;
-	}
-	
 	void insertIntoTable(String table_name, Object... values_in_order) throws SQLException {
 		Map<String, String> attributes = tables.get(table_name.toLowerCase());
 		Set<String> column_names = attributes.keySet();
@@ -245,6 +296,7 @@ public class AppModel {
 	}
 	
 	List<Map<String, Object>> getTableEntries(String table_name, String... requested_columns_in_order) throws SQLException {
+		// SELECT <requested_columns_in_order> FROM <table_name>
 		return processQuery(AppModel.SQLUtils.makeSQLTemplateSelectFrom(table_name, requested_columns_in_order));
 	}
 	
@@ -264,6 +316,9 @@ public class AppModel {
 		processNonQuery(AppModel.SQLUtils.makeSQLTemplateDeleteFromWhere(table_name, primary_key_name), table_primary_key_id);
 	}
 	
+	// ---------------------------------------------------------------
+	// ------------------------- Database ----------------------------
+	// ---------------------------------------------------------------
 	void enterDatabase() throws SQLException, ClassNotFoundException, IOException {
 		try {
 			modelConnection = DriverManager.getConnection(JDBC_MAIN_ADDRESS, MYSQL_USERNAME, MYSQL_PASSWORD);
@@ -326,20 +381,10 @@ public class AppModel {
 		return out;
 	}
 	
-	static final Map<String, Class<?>> MYSQL_DATATYPES = Map.ofEntries(
-        Map.entry("VARCHAR", String.class),
-        Map.entry("INT", Integer.class),
-        Map.entry("INTEGER", Integer.class),
-        Map.entry("BIT", Boolean.class),
-		Map.entry("BOOLEAN", Boolean.class),
-        Map.entry("FLOAT", Double.class),
-        Map.entry("DOUBLE", Double.class),
-        Map.entry("DATE", java.sql.Date.class),
-        Map.entry("TIME", java.sql.Time.class),
-        Map.entry("DATETIME", java.sql.Timestamp.class)
-    );
-	
-	static final Comparator<Object> DEFAULT_COMPARATOR = new Comparator<Object>() {
+	// ---------------------------------------------------------------
+	// --------------------- Private Attributes ----------------------
+	// ---------------------------------------------------------------
+	private static final Comparator<Object> DEFAULT_COMPARATOR = new Comparator<>() {
 		@Override
 		public int compare(Object o1, Object o2) {
 			Number a, b;
