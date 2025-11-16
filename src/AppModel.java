@@ -3,6 +3,7 @@ import java.util.*;
 import java.time.*;
 import java.time.format.*;
 import javax.swing.table.DefaultTableModel;
+import javax.swing.table.TableRowSorter;
 import java.util.stream.Stream;
 import java.util.stream.Collectors;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -31,21 +32,30 @@ public class AppModel {
 	
 	static class SQLUtils {
 		static String makeSQLTemplateUpdateSetWhere(String table_name, String set_name, String where_name) {
-			if (null == table_name || null == set_name || null == where_name)
+			if (null == table_name || null == set_name || null == where_name || !assessAllIdentifiers(table_name, set_name, where_name))
 				throw new IllegalArgumentException("makeSQLTemplateUpdateSetWhere: please check your parameters");
 			return "UPDATE " + table_name + " SET " + set_name + " = ? WHERE " + where_name + " = ?;";
 		}
 		static String makeSQLTemplateInsertIntoValues(String table_name, String... column_names) {
-			if (null == table_name || null == column_names)
+			String[] identifiers = Arrays.copyOf(column_names, column_names.length + 1);
+			identifiers[identifiers.length - 1] = table_name;
+			if (null == table_name || null == column_names || !assessAllIdentifiers(identifiers))
 				throw new IllegalArgumentException("makeSQLTemplateInsertIntoValues: please check your parameters");
 			String column_body = "(" + String.join(",", column_names) + ")";
 			String value_body = "(" + Stream.generate(() -> "?").limit(column_names.length).collect(Collectors.joining(",")) + ")";
 			return "INSERT INTO " + table_name + " " + column_body + " VALUES " + value_body + ";";
 		}
 		static String makeSQLTemplateSelectFrom(String table_name, String... ordered_column_names) {
-			if (null == table_name || null == ordered_column_names)
+			String[] identifiers = Arrays.copyOf(ordered_column_names, ordered_column_names.length + 1);
+			identifiers[identifiers.length - 1] = table_name;
+			if (null == table_name || null == ordered_column_names || !assessAllIdentifiers(identifiers))
 				throw new IllegalArgumentException("makeSQLTemplateSelectFrom: please check your parameters");
 			return "SELECT " + String.join(",", ordered_column_names) + " FROM " + table_name + ";";
+		}
+		static String makeSQLTemplateDeleteFromWhere(String table_name, String where_key_name) {
+			if (null == table_name || null == where_key_name || !assessAllIdentifiers(table_name, where_key_name))
+				throw new IllegalArgumentException("makeSQLTemplateDeleteFromOneWhere: please check your parameters");
+			return "DELETE FROM " + table_name + " WHERE " + where_key_name + " = ?";
 		}
 		static String toSQLDate(LocalDate ld) {
 			return ld.format(DateTimeFormatter.ofPattern(DATE_FORMATTING));
@@ -75,7 +85,16 @@ public class AppModel {
 		static boolean genderIsValid(char c) {
 			return c == 'M' || c == 'F';
 		}
-		
+		private static boolean assessIdentifier(String identifier) {
+			return identifier != null && identifier.trim().length() > 0 &&
+				identifier.matches(REGEX_SQL_IDENTIFIER);
+		}
+		private static boolean assessAllIdentifiers(String... identifierSet) {
+			boolean assessment = true;
+			for (int i = 0; assessment && i < identifierSet.length; i++)
+				assessment = assessIdentifier(identifierSet[i]);
+			return assessment;
+		}
 		static final int LONG_STRING_LENGTH = 254;
 		static final int SHORT_STRING_LENGTH = 127;
 		static final int SHORTER_STRING_LENGTH = 15;
@@ -83,6 +102,8 @@ public class AppModel {
 		static final String DATE_FORMATTING = "yyyy-MM-dd";
 		static final String REGEX_LATIN1 = "\\A[\\u0000-\\u00FF]*\\z";
 		static final String REGEX_EMAIL = "^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$";
+		private static final String REGEX_SQL_IDENTIFIER = "\\*|^[a-zA-Z_]\\w*$";
+		private static final String REGEX_SQL_NON_NESTED_FUNCTION = "^[A-Za-z_]*\\(\\s*([\\w.]+(\\s*,\\s*[\\w.]+)*)?\\s*\\)$";
 	}
 	
 	Object[] readSQLFile(String sql_path) throws SQLException, IOException, InvalidPathException {
@@ -144,7 +165,7 @@ public class AppModel {
 					// This must be a LinkedHashMap so that the column order is not lost
 					t = new LinkedHashMap<>();
 					for (i = 1; i <= cols; i++)
-						t.put(rsmd.getColumnLabel(i), null);
+						t.put(rsmd.getColumnLabel(i), rsmd.getColumnTypeName(i));
 					out.add(t);
 					rs.beforeFirst();
 					if (rs.next()) {
@@ -198,8 +219,10 @@ public class AppModel {
 		for (i = 1; i < maprep.size(); i++) {
 			v = new Object[basis.size()];
 			j = 0;
-			for (String k : basis.keySet())
+			for (String k : basis.keySet()) {
+				//System.out.println(basis.get(k));
 				v[j++] = maprep.get(i).get(k);
+			}
 			dtm.addRow(v);
 			v = null;
 		}
@@ -207,13 +230,14 @@ public class AppModel {
 		return dtm;
 	}
 	
+	TableRowSorter makeTableRowSorter(DefaultTableModel dtm) {
+		TableRowSorter trs = new TableRowSorter(dtm);
+		for (int i = 0; i < dtm.getColumnCount(); i++)
+			trs.setComparator(i, DEFAULT_COMPARATOR);
+		return trs;
+	}
+	
 	void insertIntoTable(String table_name, Object... values_in_order) throws SQLException {
-		// TODO: Foolproofing
-		/*
-		List<String> attributes = tables.get(table_name.toLowerCase());
-		processNonQuery(AppModel.SQLUtils.makeSQLTemplateInsertIntoValues(table_name, attributes.subList(1, attributes.size())
-			.toArray(new String[0])), values_in_order);
-		*/
 		Map<String, String> attributes = tables.get(table_name.toLowerCase());
 		Set<String> column_names = attributes.keySet();
 		String[] pk_excluded_column_names = Arrays.copyOfRange(column_names.toArray(new String[0]), 1, column_names.size());
@@ -221,24 +245,23 @@ public class AppModel {
 	}
 	
 	List<Map<String, Object>> getTableEntries(String table_name, String... requested_columns_in_order) throws SQLException {
-		// TODO: Foolproofing - check if listed columns are actually column names
 		return processQuery(AppModel.SQLUtils.makeSQLTemplateSelectFrom(table_name, requested_columns_in_order));
 	}
 	
 	void updateColumnValueOfId(String table_name, String column_name, int table_primary_key_id, Object newValue) throws SQLException {
-		// TODO: Foolproofing
-		/*
-		List<String> attributes = tables.get(table_name.toLowerCase());
-		String primary_key_name = attributes.get(0);
-		processNonQuery(AppModel.SQLUtils.makeSQLTemplateUpdateSetWhere(table_name, column_name, primary_key_name),
-			newValue, primary_key_id);
-		*/
 		Map<String, String> attributes = tables.get(table_name.toLowerCase());
 		Set<String> column_names = attributes.keySet();
 		String[] attribute_array = column_names.toArray(new String[0]);
 		String primary_key_name = attribute_array[0];
 		processNonQuery(AppModel.SQLUtils.makeSQLTemplateUpdateSetWhere(table_name, column_name, primary_key_name),
 			newValue, table_primary_key_id);
+	}
+	
+	void deleteById(String table_name, int table_primary_key_id) throws SQLException {
+		Map<String, String> attributes = tables.get(table_name.toLowerCase());
+		Set<String> column_names = attributes.keySet();
+		String primary_key_name = column_names.toArray(new String[0])[0];
+		processNonQuery(AppModel.SQLUtils.makeSQLTemplateDeleteFromWhere(table_name, primary_key_name), table_primary_key_id);
 	}
 	
 	void enterDatabase() throws SQLException, ClassNotFoundException, IOException {
@@ -303,8 +326,42 @@ public class AppModel {
 		return out;
 	}
 	
-	private Map<String, Map<String, String>> tables;
+	static final Map<String, Class<?>> MYSQL_DATATYPES = Map.ofEntries(
+        Map.entry("VARCHAR", String.class),
+        Map.entry("INT", Integer.class),
+        Map.entry("INTEGER", Integer.class),
+        Map.entry("BIT", Boolean.class),
+		Map.entry("BOOLEAN", Boolean.class),
+        Map.entry("FLOAT", Double.class),
+        Map.entry("DOUBLE", Double.class),
+        Map.entry("DATE", java.sql.Date.class),
+        Map.entry("TIME", java.sql.Time.class),
+        Map.entry("DATETIME", java.sql.Timestamp.class)
+    );
 	
+	static final Comparator<Object> DEFAULT_COMPARATOR = new Comparator<Object>() {
+		@Override
+		public int compare(Object o1, Object o2) {
+			Number a, b;
+			double da, db;
+			if (null == o1 && null == o2)
+				return 0;
+			if (null == o1)
+				return -1;
+			if (null == o2)
+				return 1;
+			if (o1 instanceof Number && o2 instanceof Number) {
+				a = (Number)o1;
+				b = (Number)o2;
+				da = a.doubleValue();
+				db = b.doubleValue();
+				return Double.compare(da, db);
+			}
+			return o1.toString().compareTo(o2.toString());
+		}
+	};
+	
+	private Map<String, Map<String, String>> tables;
 	private Connection modelConnection;
 	private final String DATABASE_NAME;
 	private final String MYSQL_USERNAME;
