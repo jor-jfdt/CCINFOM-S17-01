@@ -90,7 +90,6 @@ CREATE TABLE IF NOT EXISTS LOA (
 CREATE TABLE IF NOT EXISTS Payment (
 	payment_id INT PRIMARY KEY AUTO_INCREMENT,
 	client_plan_id INT,
-	policy_id INT,
 	amount FLOAT,
 	payment_date DATETIME,
 	payment_method VARCHAR(127),
@@ -120,7 +119,6 @@ CREATE TABLE IF NOT EXISTS Claim (
 CREATE TABLE IF NOT EXISTS Payout (
 	payout_id INT PRIMARY KEY AUTO_INCREMENT,
 	claim_id INT,
-	client_plan_id INT,
 	service_date DATETIME,
 	service_type VARCHAR(127),
 	service_amount FLOAT,
@@ -128,6 +126,5 @@ CREATE TABLE IF NOT EXISTS Payout (
 	payout_date DATETIME,
 	status VARCHAR(15),
 	data_status VARCHAR(15),
-	FOREIGN KEY (claim_id) REFERENCES Claim(claim_id),
-	FOREIGN KEY (client_plan_id) REFERENCES ClientPolicy(client_plan_id)
+	FOREIGN KEY (claim_id) REFERENCES Claim(claim_id)
 );
