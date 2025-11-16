@@ -42,11 +42,15 @@ public class AppModel {
 	// ---------------- Utilities for checking input -----------------
 	// ---------------------------------------------------------------
 	static class SQLUtils {
+		// Creates a PreparedStatement template for processQuery
+		// Returns "UPDATE <table_name> SET <set_name> = ? WHERE <where_name> = ?;"
 		static String makeSQLTemplateUpdateSetWhere(String table_name, String set_name, String where_name) {
 			if (null == table_name || null == set_name || null == where_name || !assessAllIdentifiers(table_name, set_name, where_name))
 				throw new IllegalArgumentException("makeSQLTemplateUpdateSetWhere: please check your parameters");
 			return "UPDATE " + table_name + " SET " + set_name + " = ? WHERE " + where_name + " = ?;";
 		}
+		// Creates a PreparedStatement template for processQuery
+		// Returns "INSERT INTO <table_name> (<column_name1>,<column_name2>,...) VALUES (?,?,...);"
 		static String makeSQLTemplateInsertIntoValues(String table_name, String... column_names) {
 			String[] identifiers = Arrays.copyOf(column_names, column_names.length + 1);
 			identifiers[identifiers.length - 1] = table_name;
@@ -56,6 +60,8 @@ public class AppModel {
 			String value_body = "(" + Stream.generate(() -> "?").limit(column_names.length).collect(Collectors.joining(",")) + ")";
 			return "INSERT INTO " + table_name + " " + column_body + " VALUES " + value_body + ";";
 		}
+		// Creates a PreparedStatement template for processQuery
+		// Returns "SELECT <column_name1>,<column_name2>,... FROM <table_name>;"
 		static String makeSQLTemplateSelectFrom(String table_name, String... ordered_column_names) {
 			String[] identifiers = Arrays.copyOf(ordered_column_names, ordered_column_names.length + 1);
 			identifiers[identifiers.length - 1] = table_name;
@@ -63,33 +69,51 @@ public class AppModel {
 				throw new IllegalArgumentException("makeSQLTemplateSelectFrom: please check your parameters");
 			return "SELECT " + String.join(",", ordered_column_names) + " FROM " + table_name + ";";
 		}
+		// Creates a PreparedStatement template for processQuery
+		// Returns "DELETE FROM <table_name> WHERE <where_key_name> = ?;"
 		static String makeSQLTemplateDeleteFromWhere(String table_name, String where_key_name) {
 			if (null == table_name || null == where_key_name || !assessAllIdentifiers(table_name, where_key_name))
 				throw new IllegalArgumentException("makeSQLTemplateDeleteFromOneWhere: please check your parameters");
-			return "DELETE FROM " + table_name + " WHERE " + where_key_name + " = ?";
+			return "DELETE FROM " + table_name + " WHERE " + where_key_name + " = ?;";
 		}
+		// Creates a DATE in form of a string that can be understood by SQL
 		static String toSQLDate(LocalDate ld) {
 			return ld.format(DateTimeFormatter.ofPattern(DATE_FORMATTING));
 		}
-		static LocalDate stringToDate(String str) {
-			return str != null ? LocalDate.parse(str, DateTimeFormatter.ofPattern(DATE_FORMATTING)) : null;
+		// Creates a DATETIME in form of a string that can be understood by SQL
+		static String toSQLDatetime(LocalDateTime ldt) {
+			return ldt.format(DateTimeFormatter.ofPattern(DATETIME_FORMATTING));
 		}
+		// Converts a string to Java's LocalDate; null if inconvertible
+		static LocalDate stringToDate(String str) {
+			return str != null && dateIsValid(str) ? LocalDate.parse(str, DateTimeFormatter.ofPattern(DATE_FORMATTING)) : null;
+		}
+		// Converts a string to Java's LocalDateTime; null if inconvertible
+		static LocalDate stringToDatetime(String str) {
+			return str != null && datetimeIsValid(str) ? LocalDateTime.parse(str, DateTimeFormatter.ofPattern(DATE_FORMATTING)) : null;
+		}
+		// Check if String fits the requirements for a VARCHAR(254)
 		static boolean stringFitsLong(String str) {
 			return str != null && str.length() > 0 && str.length() <= LONG_STRING_LENGTH && str.matches(REGEX_LATIN1);
 		}
+		// Check if String fits the requirements for a VARCHAR(127)
 		static boolean stringFitsShort(String str) {
 			return str != null && str.length() > 0 && str.length() <= SHORT_STRING_LENGTH && str.matches(REGEX_LATIN1);
 		}
+		// Check if String fits the requirements for a VARCHAR(15)
 		static boolean stringFitsShorter(String str) {
 			return str != null && str.length() > 0 && str.length() <= SHORTER_STRING_LENGTH && str.matches(REGEX_LATIN1);
 		}
+		// Check if String fits the requirements for an ICD10, i.e. 3-7 chars only
 		static boolean stringFitsICD10(String str) {
 			return str != null && str.length() >= ICD10_STRING_MIN_LENGTH &&
 				str.length() <= ICD10_STRING_MAX_LENGTH && str.matches(REGEX_LATIN1);
 		}
+		// Check if String fits the requirements for an email address
 		static boolean emailIsValid(String str) {
 			return str != null && stringFitsLong(str) && str.matches(REGEX_EMAIL);
 		}
+		// Check if String fits the requirements for a DATE type
 		static boolean dateIsValid(String str) {
 			try {
 				return str != null && LocalDate.parse(str, DateTimeFormatter.ofPattern(DATE_FORMATTING)) != null;
@@ -97,20 +121,24 @@ public class AppModel {
 				return false;
 			}
 		}
+		// Check if String fits the requirements for a DATETIME type
 		static boolean datetimeIsValid(String str) {
 			try {
-				return str != null && LocalDate.parse(str, DateTimeFormatter.ofPattern(DATETIME_FORMATTING)) != null;
+				return str != null && LocalDateTime.parse(str, DateTimeFormatter.ofPattern(DATETIME_FORMATTING)) != null;
 			} catch (DateTimeParseException dtpe) {
 				return false;
 			}
 		}
+		// Check if String fits the requirements for gender assigned at birth
 		static boolean genderIsValid(char c) {
 			return c == 'M' || c == 'F';
 		}
+		// Checks if identifier name is valid
 		private static boolean assessIdentifier(String identifier) {
 			return identifier != null && identifier.trim().length() > 0 &&
 				identifier.matches(REGEX_SQL_IDENTIFIER);
 		}
+		// Checks if all identifier names listed are valid
 		private static boolean assessAllIdentifiers(String... identifierSet) {
 			boolean assessment = true;
 			for (int i = 0; assessment && i < identifierSet.length; i++)
@@ -133,6 +161,8 @@ public class AppModel {
 	// ---------------------------------------------------------------
 	// ------------------------- For JTables -------------------------
 	// ---------------------------------------------------------------
+	
+	// Creates a DefaultTableModel for a JTable to be used for .setModel()
 	DefaultTableModel makeTableModel(List<Map<String, Object>> maprep) {
 		DefaultTableModel dtm = new DefaultTableModel();
 		Map<String, Object> basis = maprep.get(0);
@@ -156,6 +186,7 @@ public class AppModel {
 		return dtm;
 	}
 	
+	// Creates a TableRowSorter<> for a JTable to be used for .setRowSorter()
 	TableRowSorter<DefaultTableModel> makeTableRowSorter(DefaultTableModel dtm) {
 		TableRowSorter<DefaultTableModel> trs = new TableRowSorter<>(dtm);
 		for (int i = 0; i < dtm.getColumnCount(); i++)
@@ -163,6 +194,8 @@ public class AppModel {
 		return trs;
 	}
 	
+	// Creates a TableRowSorter<> for a JTable to be used for .setRowSorter()
+	// with a filtering based on a keyword across the given columns
 	TableRowSorter<DefaultTableModel> filterOnTableRowSorter(DefaultTableModel dtm, String keyword, String... target_columns) {
 		if (null == keyword || keyword.isEmpty())
 			return makeTableRowSorter(dtm);
@@ -187,6 +220,8 @@ public class AppModel {
 	// ---------------------------------------------------------------
 	// --------------------------- C R U D ---------------------------
 	// ---------------------------------------------------------------
+	
+	// Parses a .SQL file whole
 	Object[] readSQLFile(String sql_path) throws SQLException, IOException, InvalidPathException {
 		Path fp = null;
 		String content = null;
@@ -225,6 +260,12 @@ public class AppModel {
 		return result;
 	}
 	
+	// Processes a single query with a given query template. This is primarily for SELECT statements.
+	// Returns a List<> of rows resulting from the query.
+	// The first element of this List is the "basis row", with the String as the attribute name
+	// and the Object (castable to String) as the SQL datatype name
+	// The succeeding elements then represent each entry that matches the given query, with the String
+	// as the attribute name and the Object as the value of the entry for that attribute.
 	List<Map<String, Object>> processQuery(String queryTemplate, Object... params) throws SQLException {
 		ResultSetMetaData rsmd = null;
 		Map<String, Object> t = null;
@@ -269,6 +310,11 @@ public class AppModel {
 		return out;
 	}
 	
+	// Processes a single DML statement with a given DML template.
+	// This is used for UPDATE, INSERT, DELETE, etc., which alters the database and
+	// does not try to match entries.
+	//
+	// Returns an int representing the number of rows affected after executing the statement.
 	int processNonQuery(String dmlTemplate, Object... params) throws SQLException {
 		int i, r = -1;
 		if (null == modelConnection || modelConnection.isClosed()) {
@@ -288,6 +334,7 @@ public class AppModel {
 		return r;
 	}
 	
+	// C. Creates an entry on the specified table with its corresponding values.
 	void insertIntoTable(String table_name, Object... values_in_order) throws SQLException {
 		Map<String, String> attributes = tables.get(table_name.toLowerCase());
 		Set<String> column_names = attributes.keySet();
@@ -295,11 +342,15 @@ public class AppModel {
 		processNonQuery(AppModel.SQLUtils.makeSQLTemplateInsertIntoValues(table_name, pk_excluded_column_names), values_in_order);
 	}
 	
+	// R. Reads all entries from a table.
+	// Set of attributes to include in the result can be listed in requested_columns_in_order.
+	// Attribute values of entries unlisted in requested_columns_in_order will not be shown in the result.
 	List<Map<String, Object>> getTableEntries(String table_name, String... requested_columns_in_order) throws SQLException {
 		// SELECT <requested_columns_in_order> FROM <table_name>
 		return processQuery(AppModel.SQLUtils.makeSQLTemplateSelectFrom(table_name, requested_columns_in_order));
 	}
 	
+	// U. Updates an attribute value of an entry within a table assigned to the target primary key.
 	void updateColumnValueOfId(String table_name, String column_name, int table_primary_key_id, Object newValue) throws SQLException {
 		Map<String, String> attributes = tables.get(table_name.toLowerCase());
 		Set<String> column_names = attributes.keySet();
@@ -309,6 +360,7 @@ public class AppModel {
 			newValue, table_primary_key_id);
 	}
 	
+	// D. Deletes an entry from the table assigned to the target primary key.
 	void deleteById(String table_name, int table_primary_key_id) throws SQLException {
 		Map<String, String> attributes = tables.get(table_name.toLowerCase());
 		Set<String> column_names = attributes.keySet();
@@ -319,6 +371,8 @@ public class AppModel {
 	// ---------------------------------------------------------------
 	// ------------------------- Database ----------------------------
 	// ---------------------------------------------------------------
+	
+	// Opens the connection to the database.
 	void enterDatabase() throws SQLException, ClassNotFoundException, IOException {
 		try {
 			modelConnection = DriverManager.getConnection(JDBC_MAIN_ADDRESS, MYSQL_USERNAME, MYSQL_PASSWORD);
@@ -330,6 +384,7 @@ public class AppModel {
 		}
 	}
 	
+	// Closes the connection to the database.
 	void closeDatabase() throws SQLException {
 		if (null == modelConnection || modelConnection.isClosed())
 			return;
@@ -341,6 +396,7 @@ public class AppModel {
 		}
 	}
 	
+	@Deprecated
 	private void printSuccessLog(AM_SMSG msgtype, Object... params) {
 		switch (msgtype) {
 			case AMS_MAKECONNECTION:
@@ -355,6 +411,11 @@ public class AppModel {
 		}
 	}
 	
+	// Identifies the tables and its attributes into a Map<>
+	// Map<  String,        Map<  String,       String    >
+	//         ^                    ^             ^
+	//         |                    |             |
+	//     Table name         Attribute name   Data type
 	private Map<String, Map<String, String>> identifyDatabaseTables() throws SQLException {
 		Map<String, Map<String, String>> out = null;
 		List<Map<String, Object>> table_names = processQuery("SELECT TABLE_NAME FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA = DATABASE();");
@@ -384,6 +445,9 @@ public class AppModel {
 	// ---------------------------------------------------------------
 	// --------------------- Private Attributes ----------------------
 	// ---------------------------------------------------------------
+	
+	// Custom comparator used for TableRowSorter instances.
+	// Specifically designed to fix errors on number sorting.
 	private static final Comparator<Object> DEFAULT_COMPARATOR = new Comparator<>() {
 		@Override
 		public int compare(Object o1, Object o2) {
@@ -406,6 +470,7 @@ public class AppModel {
 		}
 	};
 	
+	// Database variables
 	private Map<String, Map<String, String>> tables;
 	private Connection modelConnection;
 	private final String DATABASE_NAME;
