@@ -8,8 +8,7 @@ import javax.swing.table.TableRowSorter;
 import java.util.stream.Stream;
 import java.util.stream.IntStream;
 import java.util.stream.Collectors;
-import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.regex.Pattern;
 import java.io.IOException;
 import java.nio.file.InvalidPathException;
 import java.nio.file.Files;
@@ -196,24 +195,84 @@ public class AppModel {
 	
 	// Creates a TableRowSorter<> for a JTable to be used for .setRowSorter()
 	// with a filtering based on a keyword across the given columns
-	TableRowSorter<DefaultTableModel> filterOnTableRowSorter(DefaultTableModel dtm, String keyword, String... target_columns) {
-		if (null == keyword || keyword.isEmpty())
-			return makeTableRowSorter(dtm);
-		TableRowSorter<DefaultTableModel> trs = makeTableRowSorter(dtm);
-		List<String> tc = Arrays.asList(target_columns);
+	TableRowSorter<DefaultTableModel> filterOnTableRowSorter(DefaultTableModel dtm, String keyword) {
+		TableRowSorter<DefaultTableModel> trs = null;
+		String[] keyword_split, target_split;
+		String actual_keyword;
+		Integer t;
 		List<Integer> targets;
 		int[] varargable_targets;
-		if (null == target_columns) {
-			targets = IntStream.rangeClosed(0, dtm.getColumnCount() - 1).boxed()
-				.collect(Collectors.toList());
-		} else {
-			targets = new ArrayList<>();
-			for (int i = 0; i < dtm.getColumnCount(); i++)
-				if (tc.contains(dtm.getColumnName(i)))
-					targets.add(i);
+		boolean inverted = false;
+		// Walang dtm walang sorter
+		if (null != dtm) {
+			trs = makeTableRowSorter(dtm);
+			// Walang keyword walang filter
+			if (keyword != null && keyword.length() > 0) {
+				// Split the keyword into two parts para maisolate natin ung @@ or @! tag sa unahan
+				keyword_split = keyword.trim().replaceAll("\\s+", " ").split(" ", 2);
+				// Walang @@ or @!a,b,c,.. sa unahan, walang specific column na pagsesearchan ng keyword,
+				// so the user must be asking for the whole keyword to be searched across all columns
+				if (keyword_split.length <= 1 || !(keyword_split[0].startsWith("@@") || keyword_split[0].startsWith("@!"))) {
+					actual_keyword = keyword;
+					targets = IntStream.rangeClosed(0, dtm.getColumnCount() - 1).boxed().collect(Collectors.toList());
+				} else {
+					inverted = keyword_split[0].startsWith("@!");
+					// Found @@ or @! tag, baka may gusto ung user na specific column na hanapan ng keywords
+					// Forcefully clean the @@ or @! tag at itransform to into a comma-separated number string
+					// Which means tatanggalin ko ung mga non-numeric symbols except for commas
+					// Tapos just in case lang, ung mga napasobra o nadobleng spaces icompress na rin into one
+					target_split = keyword_split[0].replaceAll("[^0-9,]+", " ").replaceAll("\\s+", " ")
+						.replaceAll("[, ]+", ",").split(",");
+					// Kung walang matinong number na laman ung tag, then false alarm, wala palang gustong column
+					// ang user na hanapan, so just search for the whole keyword again across all columns
+					if (0 == target_split.length) {
+						actual_keyword = keyword;
+						targets = IntStream.rangeClosed(0, dtm.getColumnCount() - 1).boxed().collect(Collectors.toList());
+					} else {
+						// May @@ or @! tag sa unahan containing actual indices
+						// Wag isama sa search to at gamitin lang ung other part ng keyword as search query
+						actual_keyword = keyword_split[1];
+						// Kung inverted, then ang sistema is wag isasama ung mga nasabing columns,
+						// kaya magsisimula tayo sa list na kasama lahat ng columns then we take away
+						// Otherwise, start with an empty array then magdadagdag tayo
+						targets = inverted ?
+							IntStream.rangeClosed(0, dtm.getColumnCount() - 1).boxed().collect(Collectors.toList()) :
+							new ArrayList<>();
+						// Convert all numeric strings into Integers, pero iiignore ung mga out of bound indices
+						// Dahil nareplace rin ung @@ or @! with , then most likely ang first index ng target_split ay empty string
+						// Skip it by starting at i = 1
+						for (int i = 1; i < target_split.length; i++) {
+							if (inverted && targets.isEmpty())
+								break;
+							if (!inverted && targets.size() < dtm.getColumnCount())
+								break;
+							t = Integer.valueOf(target_split[i]);
+							if (t > 0 && t <= dtm.getColumnCount())
+								// Pag inverted, remove (t - 1), otherwise add
+								if (inverted)
+									// Cast to Object kasi hindi yan supposed to be
+									// "remove the (t - 1)th value of the ArrayList", kundi
+									// "remove value: t - 1 inside the ArrayList"
+									targets.remove((Object)(t - 1));
+								else
+									targets.add(t - 1);
+						}
+						// Pag walang nadagdag, then lahat ng columns dapat hahanapan natin
+						if (!inverted && targets.isEmpty())
+							targets = IntStream.rangeClosed(0, dtm.getColumnCount() - 1).boxed().collect(Collectors.toList());
+					}
+				}
+				actual_keyword = Pattern.quote(actual_keyword);
+				varargable_targets = Arrays.stream(targets.toArray(new Integer[0])).mapToInt(Integer::intValue).toArray();
+				trs.setRowFilter(RowFilter.regexFilter("(?i)" + actual_keyword, varargable_targets));
+			}
 		}
-		varargable_targets = Arrays.stream(targets.toArray(new Integer[0])).mapToInt(Integer::intValue).toArray();
-		trs.setRowFilter(RowFilter.regexFilter("(?i)" + keyword, varargable_targets));
+		keyword_split = null;
+		target_split = null;
+		actual_keyword = null;
+		t = null;
+		targets = null;
+		varargable_targets = null;
 		return trs;
 	}
 	
@@ -241,7 +300,7 @@ public class AppModel {
 			return null;
 		}
 		statementSet = content
-			.replaceAll("(--.*)|((?s)\\/\\*.*?\\*\\/)", "") // Tanggalin lahat ng comments
+			.replaceAll("(--.*)|(#.*)|((?s)\\/\\*.*?\\*\\/)", "") // Tanggalin lahat ng comments
 			.replaceAll("\\s+", " ") // Paltan lahat ng extra whitespaces ng isang space lang
 			.trim() // Trim trailing whitespaces sa unahan saka hulihan
 			.split("(?<=;)"); // Split statements before each ; (so kasama ung ;)
@@ -249,9 +308,9 @@ public class AppModel {
 		i = 0;
 		if (statementSet.length > 0) {
 			for (String s : statementSet) {
-				//System.out.println("[read] " + s);
+				System.out.println("[read] " + s);
 				if (!s.isEmpty())
-					if (s.toLowerCase().trim().startsWith("SELECT"))
+					if (s.toUpperCase().trim().startsWith("SELECT"))
 						result[i++] = processQuery(s);
 					else
 						result[i++] = processNonQuery(s);
@@ -396,7 +455,7 @@ public class AppModel {
 		}
 	}
 	
-	@Deprecated
+	// Prints success messages to the console.
 	private void printSuccessLog(AM_SMSG msgtype, Object... params) {
 		switch (msgtype) {
 			case AMS_MAKECONNECTION:
