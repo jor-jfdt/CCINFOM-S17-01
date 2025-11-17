@@ -349,6 +349,8 @@ public abstract class BasePanel extends BackgroundPanel {
         return backButton;
     }
 
+    public JButton[] getOptions() { return options;}
+
     protected  boolean optionsVisible = true;
     protected String activePanelKey;
     protected Map<String, JTable> tableMap;

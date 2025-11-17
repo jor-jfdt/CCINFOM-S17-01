@@ -285,6 +285,16 @@ public class AppGUI extends JFrame {
         recordPanel.addHideButtonListener(listener);
         transactionPanel.addHideButtonListener(listener);
         reportPanel.addHideButtonListener(listener);
+
+        for (int i = 0; i < recordPanel.getOptions().length; i++) {
+            recordPanel.addOptionButtonListener(i, listener);
+        }
+        for (int i = 0; i < transactionPanel.getOptions().length; i++) {
+            transactionPanel.addOptionButtonListener(i, listener);
+        }
+        for (int i = 0; i < transactionPanel.getOptions().length; i++) {
+            transactionPanel.addOptionButtonListener(i, listener);
+        }
     }
 
     private final JPanel cardContainer;

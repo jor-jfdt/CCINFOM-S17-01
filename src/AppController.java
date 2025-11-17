@@ -40,6 +40,19 @@ public class AppController implements ActionListener {
             System.out.println("Hide Button in Report Pressed");
             appGUI.getReportPanel().toggleOptionsVisibility();
         }
+        for (int i = 0; i < appGUI.getRecordPanel().getOptions().length; i++) {
+            if (e.getSource() == appGUI.getRecordPanel().getOptions()[i]) {
+                System.out.println("Record Option " + appGUI.getRecordPanel().getOptions()[i].getText() + " is Clicked.");
+                appGUI.getRecordPanel().showCard(appGUI.getRecordPanel().getOptions()[i].getText());
+            }
+        }
+        for (int i = 0; i < appGUI.getTransactionPanel().getOptions().length; i++) {
+            if (e.getSource() == appGUI.getTransactionPanel().getOptions()[i]) {
+                System.out.println("Transaction Option " + appGUI.getTransactionPanel().getOptions()[i].getText() + " is Clicked.");
+                appGUI.getTransactionPanel().showCard(appGUI.getTransactionPanel().getOptions()[i].getText());
+            }
+        }
+
     }
     private final AppGUI appGUI;
     private final AppModel appModel;
