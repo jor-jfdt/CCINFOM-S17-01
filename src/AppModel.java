@@ -300,7 +300,7 @@ public class AppModel {
 			return null;
 		}
 		statementSet = content
-			.replaceAll("(--.*)|((?s)\\/\\*.*?\\*\\/)", "") // Tanggalin lahat ng comments
+			.replaceAll("(--.*)|(#.*)|((?s)\\/\\*.*?\\*\\/)", "") // Tanggalin lahat ng comments
 			.replaceAll("\\s+", " ") // Paltan lahat ng extra whitespaces ng isang space lang
 			.trim() // Trim trailing whitespaces sa unahan saka hulihan
 			.split("(?<=;)"); // Split statements before each ; (so kasama ung ;)
@@ -308,9 +308,9 @@ public class AppModel {
 		i = 0;
 		if (statementSet.length > 0) {
 			for (String s : statementSet) {
-				//System.out.println("[read] " + s);
+				System.out.println("[read] " + s);
 				if (!s.isEmpty())
-					if (s.toLowerCase().trim().startsWith("SELECT"))
+					if (s.toUpperCase().trim().startsWith("SELECT"))
 						result[i++] = processQuery(s);
 					else
 						result[i++] = processNonQuery(s);

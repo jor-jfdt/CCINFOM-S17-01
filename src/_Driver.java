@@ -42,6 +42,7 @@ public class _Driver {
 		*/
 		DefaultTableModel dtm = model.makeTableModel(model.getTableEntries("client", "*"));
 		TableRowSorter<DefaultTableModel> trs = model.filterOnTableRowSorter(dtm, "@!6,7,8 f");
+		//model.readSQLFile("generate_reports.sql");
 		model.closeDatabase();
 		JFrame jf = new JFrame("Sample table");
 		JTable jt = new JTable(dtm);
