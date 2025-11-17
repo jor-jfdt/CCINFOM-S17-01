@@ -69,6 +69,16 @@ public class AppModel {
 			return "SELECT " + String.join(",", ordered_column_names) + " FROM " + table_name + ";";
 		}
 		// Creates a PreparedStatement template for processQuery
+		// Returns "SELECT <column_name1>,<column_name2>,... FROM <table_name> WHERE <where_name> = ?;"
+		static String makeSQLTemplateSelectFromWhere(String table_name, String where_name, String... ordered_column_names) {
+			String[] identifiers = Arrays.copyOf(ordered_column_names, ordered_column_names.length + 2);
+			identifiers[identifiers.length - 2] = where_name;
+			identifiers[identifiers.length - 1] = table_name;
+			if (null == table_name || null == where_name || null == ordered_column_names || !assessAllIdentifiers(identifiers))
+				throw new IllegalArgumentException("makeSQLTemplateSelectFrom: please check your parameters");
+			return "SELECT " + String.join(",", ordered_column_names) + " FROM " + table_name + " WHERE " + where_name + " = ?;";
+		}
+		// Creates a PreparedStatement template for processQuery
 		// Returns "DELETE FROM <table_name> WHERE <where_key_name> = ?;"
 		static String makeSQLTemplateDeleteFromWhere(String table_name, String where_key_name) {
 			if (null == table_name || null == where_key_name || !assessAllIdentifiers(table_name, where_key_name))
@@ -308,7 +318,7 @@ public class AppModel {
 		i = 0;
 		if (statementSet.length > 0) {
 			for (String s : statementSet) {
-				System.out.println("[read] " + s);
+				//System.out.println("[read] " + s);
 				if (!s.isEmpty())
 					if (s.toUpperCase().trim().startsWith("SELECT"))
 						result[i++] = processQuery(s);
@@ -436,7 +446,7 @@ public class AppModel {
 		try {
 			modelConnection = DriverManager.getConnection(JDBC_MAIN_ADDRESS, MYSQL_USERNAME, MYSQL_PASSWORD);
 			printSuccessLog(AM_SMSG.AMS_MAKECONNECTION);
-			readSQLFile("initialize_database.sql");
+			readSQLFile("initialize_database_.sql");
 			tables = identifyDatabaseTables();
 		} catch (SQLException se) {
 			throw new SQLException("Unable to establish connection with the database.", se);
