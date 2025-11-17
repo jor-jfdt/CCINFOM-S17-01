@@ -208,17 +208,17 @@ public class AppModel {
 			trs = makeTableRowSorter(dtm);
 			// Walang keyword walang filter
 			if (keyword != null && keyword.length() > 0) {
-				// Split the keyword into two parts para maisolate natin ung @@ tag sa unahan
+				// Split the keyword into two parts para maisolate natin ung @@ or @! tag sa unahan
 				keyword_split = keyword.trim().replaceAll("\\s+", " ").split(" ", 2);
-				// Walang @@a,b,c,.. sa unahan, walang specific column na pagsesearchan ng keyword,
+				// Walang @@ or @!a,b,c,.. sa unahan, walang specific column na pagsesearchan ng keyword,
 				// so the user must be asking for the whole keyword to be searched across all columns
 				if (keyword_split.length <= 1 || !(keyword_split[0].startsWith("@@") || keyword_split[0].startsWith("@!"))) {
 					actual_keyword = keyword;
 					targets = IntStream.rangeClosed(0, dtm.getColumnCount() - 1).boxed().collect(Collectors.toList());
 				} else {
 					inverted = keyword_split[0].startsWith("@!");
-					// Found @@ tag, baka may gusto ung user na specific column na hanapan ng keywords
-					// Forcefully clean the @@ tag at itransform to into a comma-separated number string
+					// Found @@ or @! tag, baka may gusto ung user na specific column na hanapan ng keywords
+					// Forcefully clean the @@ or @! tag at itransform to into a comma-separated number string
 					// Which means tatanggalin ko ung mga non-numeric symbols except for commas
 					// Tapos just in case lang, ung mga napasobra o nadobleng spaces icompress na rin into one
 					target_split = keyword_split[0].replaceAll("[^0-9,]+", " ").replaceAll("\\s+", " ")
@@ -239,7 +239,7 @@ public class AppModel {
 							IntStream.rangeClosed(0, dtm.getColumnCount() - 1).boxed().collect(Collectors.toList()) :
 							new ArrayList<>();
 						// Convert all numeric strings into Integers, pero iiignore ung mga out of bound indices
-						// Dahil nareplace rin ung @ with , then most likely ang first index ng target_split ay empty string
+						// Dahil nareplace rin ung @@ or @! with , then most likely ang first index ng target_split ay empty string
 						// Skip it by starting at i = 1
 						for (int i = 1; i < target_split.length; i++) {
 							if (inverted && targets.isEmpty())
