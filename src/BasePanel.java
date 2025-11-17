@@ -78,7 +78,7 @@ public abstract class BasePanel extends BackgroundPanel {
     }
 
     private JButton createHideButton() {
-        JButton button = new JButton("<");
+        JButton button = new JButton("◀");
 
         button.setFont(new Font("Arial Unicode MS", Font.PLAIN, 16));
         button.setForeground(new Color(0, 105, 55));
@@ -97,7 +97,8 @@ public abstract class BasePanel extends BackgroundPanel {
         emptyPanel.setOpaque(false);
 
         JLabel emptyLabel = new JLabel("Select an option.");
-        emptyLabel.setFont(new Font("Tahoma", Font.PLAIN, 18));
+        emptyLabel.setFont(UITools.getTitleFont());
+        emptyLabel.setForeground(UITools.getPrimaryColor());
 
         emptyPanel.add(emptyLabel, new GridBagConstraints());
         centerCardPanel.add(emptyPanel, "empty");
@@ -288,7 +289,7 @@ public abstract class BasePanel extends BackgroundPanel {
             gbcLeft.weightx = 0.0;
             gbcRight.weightx = 1.0;
 
-            hideButton.setText(">");
+            hideButton.setText("▶");
 
         } else {
             leftContainer.remove(hideButton);
@@ -304,7 +305,7 @@ public abstract class BasePanel extends BackgroundPanel {
             gbcLeftConstraints(gbcLeft);
 
             gbcRightConstraints(gbcRight);
-            hideButton.setText("<");
+            hideButton.setText("◀");
         }
         layout.setConstraints(leftContainer, gbcLeft);
         layout.setConstraints(rightPanel, gbcRight);
