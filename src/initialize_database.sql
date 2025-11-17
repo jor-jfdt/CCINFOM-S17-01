@@ -9,78 +9,78 @@ USE insurance_database;
 */
 
 CREATE TABLE IF NOT EXISTS Client (
-	member_id INT PRIMARY KEY AUTO_INCREMENT,
-	first_name VARCHAR(127),
+	member_id INT PRIMARY KEY AUTO_INCREMENT NOT NULL,
+	first_name VARCHAR(127) NOT NULL,
 	middle_name VARCHAR(127),
-	last_name VARCHAR(127),
-	birth_date DATE,
-	is_employee BOOLEAN,
-	sex VARCHAR(1),
-	is_active BOOLEAN,
-	data_status VARCHAR(15)
+	last_name VARCHAR(127) NOT NULL,
+	birth_date DATE NOT NULL,
+	is_employee BOOLEAN NOT NULL,
+	sex VARCHAR(1) NOT NULL,
+	is_active BOOLEAN NOT NULL,
+	data_status VARCHAR(15) NOT NULL
 );
 
 CREATE TABLE IF NOT EXISTS Doctor (
-	doctor_id INT PRIMARY KEY AUTO_INCREMENT,
-	first_name VARCHAR(127),
+	doctor_id INT PRIMARY KEY AUTO_INCREMENT NOT NULL,
+	first_name VARCHAR(127) NOT NULL,
 	middle_name VARCHAR(127),
-	last_name VARCHAR(127),
-	doctor_type VARCHAR(127),
-	contact_no INT,
-	email VARCHAR(254),
-	data_status VARCHAR(15)
+	last_name VARCHAR(127) NOT NULL,
+	doctor_type VARCHAR(127) NOT NULL,
+	contact_no INT NOT NULL,
+	email VARCHAR(254) NOT NULL,
+	data_status VARCHAR(15) NOT NULL
 );
 
 CREATE TABLE IF NOT EXISTS Hospital (
-	hospital_id INT PRIMARY KEY AUTO_INCREMENT,
-	hospital_name VARCHAR(127),
-	address VARCHAR(254),
-	city VARCHAR(127),
-	zip_code INT,
-	contact_no INT,
-	email VARCHAR(254),
-	data_status VARCHAR(15)
+	hospital_id INT PRIMARY KEY AUTO_INCREMENT NOT NULL,
+	hospital_name VARCHAR(127) NOT NULL,
+	address VARCHAR(254) NOT NULL,
+	city VARCHAR(127) NOT NULL,
+	zip_code INT NOT NULL,
+	contact_no INT NOT NULL,
+	email VARCHAR(254) NOT NULL,
+	data_status VARCHAR(15) NOT NULL
 );
 
 CREATE TABLE IF NOT EXISTS Policy (
-	policy_id INT PRIMARY KEY AUTO_INCREMENT,
-	policy_name VARCHAR(127),
-	coverage_type VARCHAR(127),
-	coverage_limit FLOAT,
-	payment_period VARCHAR(127),
-	inclusion VARCHAR(127),
-	data_status VARCHAR(15)
+	policy_id INT PRIMARY KEY AUTO_INCREMENT NOT NULL,
+	policy_name VARCHAR(127) NOT NULL,
+	coverage_type VARCHAR(127) NOT NULL,
+	coverage_limit FLOAT NOT NULL,
+	payment_period VARCHAR(127) NOT NULL,
+	inclusion VARCHAR(127) NOT NULL,
+	data_status VARCHAR(15) NOT NULL
 );
 
 CREATE TABLE IF NOT EXISTS Illness (
-	illness_id INT PRIMARY KEY AUTO_INCREMENT,
-	illness_name VARCHAR(127),
-	icd10_code VARCHAR(7),
-	data_status VARCHAR(15)
+	illness_id INT PRIMARY KEY AUTO_INCREMENT NOT NULL,
+	illness_name VARCHAR(127) NOT NULL,
+	icd10_code VARCHAR(7) NOT NULL,
+	data_status VARCHAR(15) NOT NULL
 );
 
 CREATE TABLE IF NOT EXISTS ClientPolicy (
-	client_plan_id INT PRIMARY KEY AUTO_INCREMENT,
-	policy_id INT,
-	member_id INT,
-	preexisting_illness VARCHAR(254),
-	effective_date DATE,
-	expiry_date DATE,
-	status VARCHAR(15),
-	data_status VARCHAR(15),
+	client_plan_id INT PRIMARY KEY AUTO_INCREMENT NOT NULL,
+	policy_id INT NOT NULL,
+	member_id INT NOT NULL,
+	preexisting_illness VARCHAR(254) NOT NULL,
+	effective_date DATE NOT NULL,
+	expiry_date DATE NOT NULL,
+	status VARCHAR(15) NOT NULL,
+	data_status VARCHAR(15) NOT NULL,
 	FOREIGN KEY (policy_id) REFERENCES Policy(policy_id),
 	FOREIGN KEY (member_id) REFERENCES Client(member_id)
 );
 
 CREATE TABLE IF NOT EXISTS LOA (
-	request_id INT PRIMARY KEY AUTO_INCREMENT,
-	client_plan_id INT,
-	hospital_id INT,
-	doctor_id INT,
-	illness_id INT,
-	service_type VARCHAR(127),
-	status VARCHAR(15),
-	data_status VARCHAR(15),
+	request_id INT PRIMARY KEY AUTO_INCREMENT NOT NULL,
+	client_plan_id INT NOT NULL,
+	hospital_id INT NOT NULL,
+	doctor_id INT NOT NULL,
+	illness_id INT NOT NULL,
+	service_type VARCHAR(127) NOT NULL,
+	status VARCHAR(15) NOT NULL,
+	data_status VARCHAR(15) NOT NULL,
 	FOREIGN KEY (client_plan_id) REFERENCES ClientPolicy(client_plan_id),
 	FOREIGN KEY (hospital_id) REFERENCES Hospital(hospital_id),
 	FOREIGN KEY (doctor_id) REFERENCES Doctor(doctor_id),
@@ -88,16 +88,16 @@ CREATE TABLE IF NOT EXISTS LOA (
 );
 
 CREATE TABLE IF NOT EXISTS Claim (
-	claim_id INT PRIMARY KEY AUTO_INCREMENT,
-	client_plan_id INT,
-	illness_id INT,
-	hospital_id INT,
-	doctor_id INT,
-	service_date DATETIME,
-	service_type VARCHAR(127),
-	covered_amount FLOAT,
-	status VARCHAR(15),
-	data_status VARCHAR(15),
+	claim_id INT PRIMARY KEY AUTO_INCREMENT NOT NULL,
+	client_plan_id INT NOT NULL,
+	illness_id INT NOT NULL,
+	hospital_id INT NOT NULL,
+	doctor_id INT NOT NULL,
+	service_date DATETIME NOT NULL,
+	service_type VARCHAR(127) NOT NULL,
+	covered_amount FLOAT NOT NULL,
+	status VARCHAR(15) NOT NULL,
+	data_status VARCHAR(15) NOT NULL,
 	FOREIGN KEY (client_plan_id) REFERENCES ClientPolicy(client_plan_id),
 	FOREIGN KEY (illness_id) REFERENCES Illness(illness_id),
 	FOREIGN KEY (hospital_id) REFERENCES Hospital(hospital_id),
@@ -105,25 +105,25 @@ CREATE TABLE IF NOT EXISTS Claim (
 );
 
 CREATE TABLE IF NOT EXISTS Payment (
-	payment_id INT PRIMARY KEY AUTO_INCREMENT,
-	claim_id INT,
-	amount FLOAT,
-	payment_date DATETIME,
-	payment_method VARCHAR(127),
-	status VARCHAR(15),
-	data_status VARCHAR(15),
+	payment_id INT PRIMARY KEY AUTO_INCREMENT NOT NULL,
+	claim_id INT NOT NULL,
+	amount FLOAT NOT NULL,
+	payment_date DATETIME NOT NULL,
+	payment_method VARCHAR(127) NOT NULL,
+	status VARCHAR(15) NOT NULL,
+	data_status VARCHAR(15) NOT NULL,
 	FOREIGN KEY (claim_id) REFERENCES Claim(claim_id)
 );
 
 CREATE TABLE IF NOT EXISTS Payout (
-	payout_id INT PRIMARY KEY AUTO_INCREMENT,
-	claim_id INT,
-	service_date DATETIME,
-	service_type VARCHAR(127),
-	service_amount FLOAT,
-	payout_amount FLOAT,
-	payout_date DATETIME,
-	status VARCHAR(15),
-	data_status VARCHAR(15),
+	payout_id INT PRIMARY KEY AUTO_INCREMENT NOT NULL,
+	claim_id INT NOT NULL,
+	service_date DATETIME NOT NULL,
+	service_type VARCHAR(127) NOT NULL,
+	service_amount FLOAT NOT NULL,
+	payout_amount FLOAT NOT NULL,
+	payout_date DATETIME NOT NULL,
+	status VARCHAR(15) NOT NULL,
+	data_status VARCHAR(15) NOT NULL,
 	FOREIGN KEY (claim_id) REFERENCES Claim(claim_id)
 );
