@@ -24,7 +24,7 @@ CREATE TABLE IF NOT EXISTS client (
 CREATE TABLE IF NOT EXISTS illness (
 	illness_id INT PRIMARY KEY AUTO_INCREMENT,
     illness_name VARCHAR(127) NOT NULL,
-    icd10_code INT UNIQUE NOT NULL,
+    icd10_code VARCHAR(7) UNIQUE NOT NULL,
 	data_status BOOLEAN NOT NULL
 );
 
