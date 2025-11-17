@@ -187,6 +187,10 @@ public abstract class BasePanel extends BackgroundPanel {
         JTable table = new JTable(new DefaultTableModel(new Object[][] {}, header));
 
         tableMap.put(key, table);
+        table.setFont(UITools.getLabelFont());
+
+        table.getTableHeader().setFont(UITools.getLabelFont());
+        table.getTableHeader().setForeground(UITools.getPrimaryColor());
 
         JScrollPane scrollPane = new JScrollPane(table);
         crudPanel.add(scrollPane, BorderLayout.CENTER);
