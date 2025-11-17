@@ -28,7 +28,7 @@ public class UITools {
     }
     public static Dimension getHideButtonSize() {
         int buttonHeight = (int)(AppGUI.screenHeight * 0.08);
-        int hideButtonWidth = Math.max(40, AppGUI.screenWidth / 40);
+        int hideButtonWidth = Math.max(42, AppGUI.screenWidth / 40);
         return new Dimension(hideButtonWidth, buttonHeight);
     }
 
