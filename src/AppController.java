@@ -59,6 +59,19 @@ public class AppController implements ActionListener {
             }
         }
 
+        //insert logic for determining what option was clicked in Record Panel to determine the fields to show in Add/Update Dialog
+        if (e.getSource() == appGUI.getRecordPanel().getAddButton()) {
+            // Open Add Dialog
+            //appGUI.getRecordPanel().AddButtonFeatures(appGUI);
+            System.out.println("Add Button Clicked");
+        } else if (e.getSource() == appGUI.getRecordPanel().getUpdateButton()) {
+            // Open Update Dialog
+            System.out.println("Update Button Clicked");
+        } else if (e.getSource() == appGUI.getRecordPanel().getVoidButton()) {
+            // Perform deletion
+            System.out.println("Void Button Clicked");
+        }
+
     }
     private final AppGUI appGUI;
     private final AppModel appModel;

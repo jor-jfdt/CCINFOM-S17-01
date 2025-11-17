@@ -55,7 +55,7 @@ public class AppGUI extends JFrame {
         this.setLocationRelativeTo(null);
         this.setVisible(true);
 
-        SwingUtilities.invokeLater(this::testDialog);
+        //SwingUtilities.invokeLater(this::testDialog);
     }
 
     //ai test dialog cuz i am fking lazy
@@ -295,6 +295,10 @@ public class AppGUI extends JFrame {
         for (int i = 0; i < reportPanel.getOptions().length; i++) {
             reportPanel.addOptionButtonListener(i, listener);
         }
+
+        recordPanel.addAddButtonListener(listener);
+        recordPanel.addUpdateButtonListener(listener);
+        recordPanel.addVoidButtonListener(listener);
     }
 
     private final JPanel cardContainer;
