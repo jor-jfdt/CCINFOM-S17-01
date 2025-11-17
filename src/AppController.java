@@ -19,12 +19,12 @@ public class AppController implements ActionListener {
                 switch (i) {
                     case 0 -> appGUI.showPanel("Record");
                     case 1 -> appGUI.showPanel("Transaction");
-                    //case 2 -> appGUI.showPanel("Report");
+                    case 2 -> appGUI.showPanel("Report");
                 }
             }
         }
         //later on add Report Panel back button controller
-        if (e.getSource() == appGUI.getRecordPanel().getBackButton() || e.getSource() == appGUI.getTransactionPanel().getBackButton()) {
+        if (e.getSource() == appGUI.getRecordPanel().getBackButton() || e.getSource() == appGUI.getTransactionPanel().getBackButton() || e.getSource() == appGUI.getReportPanel().getBackButton()) {
             System.out.println("Back to Main Menu");
             appGUI.showPanel("main");
         }
@@ -35,6 +35,10 @@ public class AppController implements ActionListener {
         else if (e.getSource() == appGUI.getTransactionPanel().getHideButton()) {
             System.out.println("Hide Button in Transaction Pressed");
             appGUI.getTransactionPanel().toggleOptionsVisibility();
+        }
+        else if (e.getSource() == appGUI.getReportPanel().getHideButton()) {
+            System.out.println("Hide Button in Report Pressed");
+            appGUI.getReportPanel().toggleOptionsVisibility();
         }
     }
     private final AppGUI appGUI;
