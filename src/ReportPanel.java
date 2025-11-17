@@ -3,6 +3,7 @@ import java.awt.*;
 import java.awt.event.ActionListener;
 import java.beans.PropertyChangeListener;
 import java.time.Year;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import com.toedter.calendar.JMonthChooser;
@@ -16,73 +17,88 @@ public class ReportPanel extends BasePanel {
 
         createReportOptions();
 
-        showCard("financial");
+        showCard("empty");
 
         updateComponent();
     }
 
     private JPanel createSelectionPanel() {
-        topCardPanel = new JPanel();
-        topCardPanel.setOpaque(false);
+        JPanel panel = new JPanel();
+        panel.setOpaque(false);
 
         JLabel monthLabel = new JLabel("Select Month:");
         monthLabel.setForeground(UITools.getPrimaryColor());
         monthLabel.setFont(UITools.getLabelFont());
 
-        JMonthChooser monthChooser = new JMonthChooser();
-        monthChooser.setMonth(-1);
-
         JLabel yearLabel = new JLabel("Select Year:");
         yearLabel.setForeground(UITools.getPrimaryColor());
         yearLabel.setFont(UITools.getLabelFont());
 
-        JYearChooser yearChooser = new JYearChooser();
-        yearChooser.setPreferredSize(new Dimension(100, yearChooser.getPreferredSize().height));
+        panel.add(monthLabel);
+        panel.add(monthChooser);
+        panel.add(Box.createHorizontalStrut(50));
+        panel.add(yearLabel);
+        panel.add(yearChooser);
+        panel.add(Box.createHorizontalStrut(50));
+        panel.add(generateButton);
 
-        generateButton = new JButton("Generate Report");
-        UITools.styleButton(generateButton);
-
-        topCardPanel.add(monthLabel);
-        topCardPanel.add(monthChooser);
-        topCardPanel.add(Box.createHorizontalStrut(50));
-        topCardPanel.add(yearLabel);
-        topCardPanel.add(yearChooser);
-        topCardPanel.add(Box.createHorizontalStrut(50));
-        topCardPanel.add(generateButton);
-
-        return topCardPanel;
+        return panel;
     }
 
-    private JPanel createReportPanel() {
-        JPanel reportPanel = new JPanel(new BorderLayout(10,10));
+    private JEditorPane createEditorPane() {
+        JEditorPane editorPane = new JEditorPane();
+        editorPane.setEditable(false);
+        editorPane.setContentType("text/html");
+        editorPane.getCaret().setVisible(false);
+
+        return editorPane;
+    }
+
+    private JPanel createReportPanel(JEditorPane editorPane) {
+        JPanel reportPanel = new JPanel(new BorderLayout(10, 10));
         reportPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
         reportPanel.setOpaque(false);
 
         reportPanel.add(createSelectionPanel(), BorderLayout.NORTH);
 
-        JPanel reportDisplayPanel = new JPanel(new BorderLayout());
-        reportDisplayPanel.setOpaque(false);
+        JScrollPane scrollPane = new JScrollPane(editorPane);
+        scrollPane.setOpaque(false);
+        scrollPane.getViewport().setOpaque(false);
+        scrollPane.setBorder(BorderFactory.createLineBorder(new Color(0,0,0,50)));
 
-        reportDisplay = new JEditorPane();
-        reportDisplay.setEditable(false);
-        reportDisplay.setContentType("text/html");
-        reportDisplay.getCaret().setVisible(false);
-
-        JScrollPane scrollPane = new JScrollPane(reportDisplay);
-        reportDisplayPanel.add(scrollPane, BorderLayout.CENTER);
-
-        reportPanel.add(reportDisplayPanel, BorderLayout.CENTER);
+        reportPanel.add(scrollPane, BorderLayout.CENTER);
 
         return reportPanel;
     }
 
     private void createReportOptions() {
         Map<String, JPanel> panelMap = new LinkedHashMap<>();
+        reportEditors = new HashMap<>();
+        // Create shared selection components FIRST
+        monthChooser = new JMonthChooser();
+        monthChooser.setMonth(-1);
 
-        panelMap.put("Financial Report", createReportPanel());
-        panelMap.put("Health Provider Report", createReportPanel());
-        panelMap.put("Policy Report", createReportPanel());
-        panelMap.put("Illness Trend", createReportPanel());
+        yearChooser = new JYearChooser();
+        yearChooser.setPreferredSize(new Dimension(100, yearChooser.getPreferredSize().height));
+
+        generateButton = new JButton("Generate Report");
+        UITools.styleButton(generateButton);
+
+        JEditorPane financialPane = createEditorPane();
+        reportEditors.put("Financial Report", financialPane);
+        panelMap.put("Financial Report", createReportPanel(financialPane));
+
+        JEditorPane providerPane = createEditorPane();
+        reportEditors.put("Health Provider Report", providerPane);
+        panelMap.put("Health Provider Report", createReportPanel(providerPane));
+
+        JEditorPane policyPane = createEditorPane();
+        reportEditors.put("Policy Report", policyPane);
+        panelMap.put("Policy Report", createReportPanel(policyPane));
+
+        JEditorPane illnessPane = createEditorPane();
+        reportEditors.put("Illness Trend", illnessPane);
+        panelMap.put("Illness Trend", createReportPanel(illnessPane));
 
         populateCardLayout(panelMap);
 
@@ -92,6 +108,7 @@ public class ReportPanel extends BasePanel {
         southButtonPanel.setLayout(new FlowLayout(FlowLayout.RIGHT));
         southButtonPanel.add(exportButton);
     }
+
 
     //no header columns needed for report panel
     @Override
@@ -129,16 +146,25 @@ public class ReportPanel extends BasePanel {
     }
 
     public void setReportContent(String htmlContent) {
-        reportDisplay.setText(htmlContent);
-        reportDisplay.setCaretPosition(0);
+        JEditorPane activePane = getReportEditorPane();
+        if (activePane != null) {
+            activePane.setText(htmlContent);
+            activePane.setCaretPosition(0);
+        } else {
+            System.err.println("Error: Could not find active editor pane for key: " + getActivePanelKey());
+        }
     }
 
     public String getReportContent() {
-        return reportDisplay.getText();
+        JEditorPane activePane = getReportEditorPane();
+        if (activePane != null) {
+            return activePane.getText();
+        }
+        return "";
     }
 
     public JEditorPane getReportEditorPane() {
-        return reportDisplay;
+        return reportEditors.get(getActivePanelKey());
     }
 
     public Integer getSelectedMonth() {
@@ -150,7 +176,8 @@ public class ReportPanel extends BasePanel {
         return yearChooser.getYear();
     }
 
-    private JEditorPane reportDisplay;
+    private Map<String, JEditorPane> reportEditors;
+
     private JMonthChooser monthChooser;
     private JYearChooser yearChooser;
     private JButton exportButton;
