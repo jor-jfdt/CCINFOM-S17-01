@@ -25,8 +25,6 @@ public class RecordPanel extends BasePanel {
         southButtonPanel.add(addButton);
 
         createCRUDContent();
-
-        showCard("Clients");
     }
 
     @Override
@@ -90,6 +88,24 @@ public class RecordPanel extends BasePanel {
         populateCardLayout(panelMap);
     }
 
+//    public void AddButtonFeatures(JFrame parentFrame) {
+//        CRUDDialog dialog = new CRUDDialog(
+//                parentFrame,
+//                "Add Client",
+//                BaseDialog.Mode.ADD,
+//                new String[]{"first_name", "last_name", "middle_initial", "birth_date", "is_employee", "sex"}
+//        );
+//
+//        dialog.setVisible(true);
+//
+//        if (dialog.isConfirmed()) {
+//            System.out.println("Confirm button clicked!");
+//            System.out.println("Values: " + dialog.getFieldValues());
+//        } else {
+//            System.out.println("Cancel button clicked!");
+//        }
+//    }
+
     public void addAddButtonListener(ActionListener listener) {
         addButton.addActionListener(listener);
     }
@@ -102,7 +118,17 @@ public class RecordPanel extends BasePanel {
         voidButton.addActionListener(listener);
     }
 
-    private JButton addButton;
-    private JButton updateButton;
-    private JButton voidButton;
+    public JButton getAddButton() {
+        return addButton;
+    }
+    public JButton getUpdateButton() {
+        return updateButton;
+    }
+    public JButton getVoidButton() {
+        return voidButton;
+    }
+
+    private final JButton addButton;
+    private final JButton updateButton;
+    private final JButton voidButton;
 }
