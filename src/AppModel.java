@@ -89,7 +89,7 @@ public class AppModel {
 			return str != null && dateIsValid(str) ? LocalDate.parse(str, DateTimeFormatter.ofPattern(DATE_FORMATTING)) : null;
 		}
 		// Converts a string to Java's LocalDateTime; null if inconvertible
-		static LocalDate stringToDatetime(String str) {
+		static LocalDateTime stringToDatetime(String str) {
 			return str != null && datetimeIsValid(str) ? LocalDateTime.parse(str, DateTimeFormatter.ofPattern(DATE_FORMATTING)) : null;
 		}
 		// Check if String fits the requirements for a VARCHAR(254)
