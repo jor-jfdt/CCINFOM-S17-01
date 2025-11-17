@@ -6,9 +6,11 @@ import java.io.IOException;
 public class Driver {
     public static void main(String[] args) throws SQLException, ClassNotFoundException, IOException, InterruptedException {
         configureLookAndFeel();
+        // Follow Model-View-Controller Design Pattern
+        AppModel model = new AppModel("insurance_database", "root", "on3L@veY@uJesus!");
 		AppGUI app = new AppGUI("Health Maintenance Organization");
-        AppModel model = new AppModel("insurance_database", "root", "hajtubtyacty1Bgmail.com");
 		AppController controller = new AppController(app, model);
+        controller.connectToDatabase();
 		//testRecordPush(model);
 		//testSQLQuery(model);
     }

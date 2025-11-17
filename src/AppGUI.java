@@ -55,7 +55,7 @@ public class AppGUI extends JFrame {
         this.setLocationRelativeTo(null);
         this.setVisible(true);
 
-        //SwingUtilities.invokeLater(this::testDialog);
+        SwingUtilities.invokeLater(this::testDialog);
     }
 
     //ai test dialog cuz i am fking lazy

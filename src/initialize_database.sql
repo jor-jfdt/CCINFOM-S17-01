@@ -8,7 +8,7 @@ USE insurance_database;
 	static final int CHAR_LENGTH = 1; // VARCHAR(1)
 */
 
-CREATE TABLE IF NOT EXISTS client (
+CREATE TABLE IF NOT EXISTS clients (
 	member_id INT PRIMARY KEY AUTO_INCREMENT,
     first_name VARCHAR(127) NOT NULL,
     last_name VARCHAR(127) NOT NULL,
@@ -28,7 +28,7 @@ CREATE TABLE IF NOT EXISTS illness (
 	data_status BOOLEAN NOT NULL
 );
 
-CREATE TABLE IF NOT EXISTS company_policy (
+CREATE TABLE IF NOT EXISTS policy (
 	plan_id INT PRIMARY KEY AUTO_INCREMENT,
     plan_name VARCHAR(127) NOT NULL,
     coverage_type VARCHAR(127) NOT NULL,
@@ -69,8 +69,8 @@ CREATE TABLE IF NOT EXISTS client_payment(
     payment_date DATE,
     payment_method VARCHAR(127),
     premium_payment_status VARCHAR(127),
-    FOREIGN KEY (member_ID) REFERENCES client(member_ID),
-    FOREIGN KEY (plan_ID) REFERENCES company_policy(plan_ID)
+    FOREIGN KEY (member_ID) REFERENCES clients(member_ID),
+    FOREIGN KEY (plan_ID) REFERENCES policy(plan_ID)
 );
 
 CREATE TABLE IF NOT EXISTS payout(
@@ -98,7 +98,7 @@ CREATE TABLE IF NOT EXISTS claim(
     service_amount FLOAT NOT NULL,
     covered_amount FLOAT NOT NULL,
     claim_status VARCHAR(15),
-    FOREIGN KEY (member_ID) REFERENCES client(member_ID),
+    FOREIGN KEY (member_ID) REFERENCES clients(member_ID),
     FOREIGN KEY (hospital_ID) REFERENCES hospital(hospital_ID),
     FOREIGN KEY (doctor_ID) REFERENCES doctor(doctor_ID)
 );
@@ -112,8 +112,8 @@ CREATE TABLE IF NOT EXISTS client_policy(
     effective_date DATE NOT NULL,
     expiry_date DATE NOT NULL,
     policy_status VARCHAR(127) NOT NULL,
-    FOREIGN KEY (member_ID) REFERENCES client(member_ID),
-    FOREIGN KEY(plan_ID) REFERENCES company_policy(plan_ID)
+    FOREIGN KEY (member_ID) REFERENCES clients(member_ID),
+    FOREIGN KEY(plan_ID) REFERENCES policy(plan_ID)
 );
 
 CREATE TABLE IF NOT EXISTS loa (
