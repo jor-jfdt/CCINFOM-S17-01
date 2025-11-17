@@ -446,7 +446,7 @@ public class AppModel {
 		try {
 			modelConnection = DriverManager.getConnection(JDBC_MAIN_ADDRESS, MYSQL_USERNAME, MYSQL_PASSWORD);
 			printSuccessLog(AM_SMSG.AMS_MAKECONNECTION);
-			readSQLFile("initialize_database_.sql");
+			readSQLFile("initialize_database.sql");
 			tables = identifyDatabaseTables();
 		} catch (SQLException se) {
 			throw new SQLException("Unable to establish connection with the database.", se);
