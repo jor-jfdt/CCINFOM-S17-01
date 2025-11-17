@@ -168,23 +168,29 @@ public abstract class BasePanel extends BackgroundPanel {
     protected JPanel createCRUDPanel(String key, String searchLabel, String[] header) {
         JPanel crudPanel = new JPanel(new BorderLayout(10,10));
         crudPanel.setBorder(BorderFactory.createEmptyBorder(10,10,10,10));
+        crudPanel.setOpaque(false);
 
-        JPanel searchPanel = new JPanel(new BorderLayout(5, 0));
+        topCardPanel = new JPanel(new BorderLayout(5, 0));
+        topCardPanel.setOpaque(false);
 
         JLabel label = new JLabel(searchLabel + " ");
         label.setForeground(UITools.getPrimaryColor());
         label.setFont(UITools.getLabelFont());
 
-        searchPanel.add(label, BorderLayout.WEST);
+        topCardPanel.add(label, BorderLayout.WEST);
 
         JTextField searchField = new JTextField();
-        searchPanel.add(searchField, BorderLayout.CENTER);
+        topCardPanel.add(searchField, BorderLayout.CENTER);
 
-        crudPanel.add(searchPanel, BorderLayout.NORTH);
+        crudPanel.add(topCardPanel, BorderLayout.NORTH);
 
         JTable table = new JTable(new DefaultTableModel(new Object[][] {}, header));
 
         tableMap.put(key, table);
+        table.setFont(UITools.getLabelFont());
+
+        table.getTableHeader().setFont(UITools.getLabelFont());
+        table.getTableHeader().setForeground(UITools.getPrimaryColor());
 
         JScrollPane scrollPane = new JScrollPane(table);
         crudPanel.add(scrollPane, BorderLayout.CENTER);
@@ -359,6 +365,7 @@ public abstract class BasePanel extends BackgroundPanel {
     protected JButton backButton;
 
     protected CardLayout rightCardLayout;
+    protected JPanel topCardPanel;
     protected JPanel centerCardPanel;
     protected JPanel southButtonPanel;
 }

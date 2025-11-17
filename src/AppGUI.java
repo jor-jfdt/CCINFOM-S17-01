@@ -192,12 +192,12 @@ public class AppGUI extends JFrame {
         createMainPanel();
         recordPanel = new RecordPanel();
         transactionPanel = new TransactionPanel();
-        //reportPanel = new ReportPanel();
+        reportPanel = new ReportPanel();
 
         cardContainer.add(mainPanel, "main");
         cardContainer.add(recordPanel, "record");
         cardContainer.add(transactionPanel, "transaction");
-        //cardContainer.add(reportPanel, "report");
+        cardContainer.add(reportPanel, "report");
 
         this.add(cardContainer, BorderLayout.CENTER);
     }
@@ -243,10 +243,10 @@ public class AppGUI extends JFrame {
 
         if (recordPanel != null)
             recordPanel.update();
-        //if (transactionPanel != null)
-        //    transactionPanel.update();
-        //if (reportPanel != null)
-        //    reportPanel.update();
+        if (transactionPanel != null)
+            transactionPanel.update();
+        if (reportPanel != null)
+            reportPanel.update();
     }
 
     public static void updateScreenDimensions(int width, int height) {
@@ -261,10 +261,14 @@ public class AppGUI extends JFrame {
     public RecordPanel getRecordPanel() {
         return recordPanel;
     }
+
     public TransactionPanel getTransactionPanel() {
         return transactionPanel;
     }
-    // public ReportPanel getReportPanel() { return reportPanel; }
+
+    public ReportPanel getReportPanel() {
+        return reportPanel;
+    }
 
     public JButton[] getMenuButtons() {
         return menuButtons;
@@ -288,8 +292,7 @@ public class AppGUI extends JFrame {
     private JPanel mainPanel;
     private RecordPanel recordPanel;
     private TransactionPanel transactionPanel;
-    //private TransactionPanel transactionPanel;
-    //private ReportPanel reportPanel;
+    private ReportPanel reportPanel;
     private JButton[] menuButtons;
 
     public static final double ASPECT_RATIO = 16.0 / 9.0;
