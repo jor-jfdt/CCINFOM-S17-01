@@ -292,8 +292,8 @@ public class AppGUI extends JFrame {
         for (int i = 0; i < transactionPanel.getOptions().length; i++) {
             transactionPanel.addOptionButtonListener(i, listener);
         }
-        for (int i = 0; i < transactionPanel.getOptions().length; i++) {
-            transactionPanel.addOptionButtonListener(i, listener);
+        for (int i = 0; i < reportPanel.getOptions().length; i++) {
+            reportPanel.addOptionButtonListener(i, listener);
         }
     }
 

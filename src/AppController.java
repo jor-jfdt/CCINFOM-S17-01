@@ -52,6 +52,12 @@ public class AppController implements ActionListener {
                 appGUI.getTransactionPanel().showCard(appGUI.getTransactionPanel().getOptions()[i].getText());
             }
         }
+        for (int i = 0; i < appGUI.getReportPanel().getOptions().length; i++) {
+            if (e.getSource() == appGUI.getReportPanel().getOptions()[i]) {
+                System.out.println("Report Option " + appGUI.getReportPanel().getOptions()[i].getText() + " is Clicked.");
+                appGUI.getReportPanel().showCard(appGUI.getReportPanel().getOptions()[i].getText());
+            }
+        }
 
     }
     private final AppGUI appGUI;
