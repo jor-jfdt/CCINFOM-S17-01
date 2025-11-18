@@ -92,7 +92,7 @@ public abstract class BasePanel extends BackgroundPanel {
         return button;
     }
 
-    private void initializeEmptyCard() {
+    protected void initializeEmptyCard() {
         JPanel emptyPanel = new JPanel(new GridBagLayout());
         emptyPanel.setOpaque(false);
 
@@ -121,7 +121,7 @@ public abstract class BasePanel extends BackgroundPanel {
         leftPanel.add(Box.createVerticalGlue(), gbc);
     }
 
-    private void addCardPanel(String key, JPanel panel, int index) {
+    protected void addCardPanel(String key, JPanel panel, int index) {
         centerCardPanel.add(panel, key);
 
         JButton button = new JButton(key);
@@ -143,7 +143,7 @@ public abstract class BasePanel extends BackgroundPanel {
         options[index] = button;
     }
 
-    private void addRightPanel(GridBagConstraints gbc) {
+    protected void addRightPanel(GridBagConstraints gbc) {
         rightPanel = new JPanel(new BorderLayout());
         rightPanel.setOpaque(false);
 

@@ -1,3 +1,5 @@
+import com.toedter.calendar.JYearChooser;
+
 import java.awt.*;
 import javax.swing.*;
 
@@ -50,5 +52,17 @@ public class UITools {
         button.setFont(new Font("Tahoma", Font.BOLD, 13));
         button.setFocusPainted(false);
         button.setBorderPainted(true);
+    }
+
+        public static void styleComboBox(JComboBox<String> monthChooser) {
+        monthChooser.setBackground(Color.WHITE);
+        monthChooser.setForeground(PRIMARY_COLOR);
+        monthChooser.setFont(new Font("Tahoma", Font.PLAIN, 13));
+    }
+
+    public static void styleYearChooser(JYearChooser yearChooser) {
+        yearChooser.setBackground(Color.WHITE);
+        yearChooser.setForeground(PRIMARY_COLOR);
+        yearChooser.setFont(new Font("Tahoma", Font.PLAIN, 13));
     }
 }

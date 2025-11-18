@@ -32,7 +32,7 @@ public class RecordPanel extends BasePanel {
         header_columns = new HashMap<>();
 
         header_columns.put("clients",
-                new String[] { "client_id", "first_name", "last_name", "middle_initial",
+                new String[] { "client_id", "first_name", "last_name", "middle_name",
                         "birth_date", "is_employee", "sex", "is_active" });
 
         header_columns.put("policy",
@@ -44,7 +44,7 @@ public class RecordPanel extends BasePanel {
                         "city", "zipcode", "contact_no", "email" });
 
         header_columns.put("doctor",
-                new String[] { "doctor_id", "first_name", "last_name", "middle_initial", "doctor_type",
+                new String[] { "doctor_id", "first_name", "last_name", "middle_name", "doctor_type",
                         "contact_no", "email" });
 
         header_columns.put("illness",

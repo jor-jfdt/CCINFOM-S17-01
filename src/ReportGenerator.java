@@ -46,13 +46,11 @@ public class ReportGenerator {
         report.append("<h1>").append(title).append("</h1>");
 
         try {
-            // Convert Object[][] to List<List<Object>> for the helper
             List<List<Object>> dataList = new ArrayList<>();
             for (Object[] rowArray : data) {
                 dataList.add(Arrays.asList(rowArray));
             }
 
-            // Call the new helper method to build the table
             report.append(buildHtmlTable(headers, dataList));
 
         } catch (Exception e) {
@@ -80,12 +78,11 @@ public class ReportGenerator {
                     Object obj = row.get(i);
                     String val = (obj != null) ? obj.toString() : "";
 
-                    // Format currency
                     if (headers[i].contains("Amount")) {
                         try {
                             val = currencyFormatter.format(Double.parseDouble(val));
                         } catch (Exception e) {
-                            // was not a number, just use the string
+                            // Ignore formatting errors
                         }
                     }
                     table.append("<td>").append(val).append("</td>");
@@ -121,5 +118,5 @@ public class ReportGenerator {
     }
 
     private static final NumberFormat currencyFormatter =
-            NumberFormat.getCurrencyInstance(new Locale("en", "PH"));
+            NumberFormat.getCurrencyInstance(Locale.forLanguageTag("en-PH"));
 }
