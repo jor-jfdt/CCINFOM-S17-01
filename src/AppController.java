@@ -24,6 +24,7 @@ public class AppController implements ActionListener {
 
     @Override
     public void actionPerformed(ActionEvent e) {
+        String tableName = new String();
         // Controller for Menu Buttons
         for (int i = 0; i < appGUI.getMenuButtons().length; i++) {
             if (e.getSource() == appGUI.getMenuButtons()[i]) {
@@ -68,8 +69,24 @@ public class AppController implements ActionListener {
                 }
             }
         }
+        //Connect Transaction Panel Options to Database
         for (int i = 0; i < appGUI.getTransactionPanel().getOptions().length; i++) {
             if (e.getSource() == appGUI.getTransactionPanel().getOptions()[i]) {
+                for (String key : appGUI.getTransactionPanel().getHeaderColumns().keySet()) {
+                    if (appGUI.getTransactionPanel().getOptions()[i].getText().toLowerCase().contains(key.replace("_", " "))) {
+                        tableName = key.replace(" ", "_");
+                        break;
+                    }
+                }
+
+                try {
+                    List<Map<String, Object>> queryResult = appModel.getTableEntries(tableName, "*");
+                    DefaultTableModel dtm = appModel.makeTableModel(queryResult);
+                    String panelKey = appGUI.getTransactionPanel().getOptions()[i].getText().replace(" ", "_").toLowerCase();
+                    appGUI.getTransactionPanel().setTable(panelKey, dtm);
+                } catch (SQLException ex) {
+                    ex.printStackTrace();
+                }
                 System.out.println("Transaction Option " + appGUI.getTransactionPanel().getOptions()[i].getText() + " is Clicked.");
                 appGUI.getTransactionPanel().showCard(appGUI.getTransactionPanel().getOptions()[i].getText());
             }
