@@ -243,6 +243,10 @@ public abstract class BasePanel extends BackgroundPanel {
         backButton.addActionListener(listener);
     }
 
+    public Map<String, String[]> getHeaderColumns() {
+        return header_columns;
+    }
+
     protected void updateComponent() {
         if (options != null) {
             Dimension buttonSize = UITools.getLeftPanelButtonSize();

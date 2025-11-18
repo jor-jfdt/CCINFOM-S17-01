@@ -33,7 +33,7 @@ public class TransactionPanel extends BasePanel {
                 "expiry_date", "stats" }
         );
 
-        header_columns.put("payment",
+        header_columns.put("client_payment",
                 new String[] { "payment_id", "client_plan_id", "amount", "payment_date", "payment_method", "status" }
         );
 
@@ -56,25 +56,25 @@ public class TransactionPanel extends BasePanel {
         Map<String, JPanel> panelMap = new LinkedHashMap<>();
         createHeaderColumns();
 
-        panelMap.put("Buy Policy", createCRUDPanel("client_policy",
+        panelMap.put("Buy Client Policy", createCRUDPanel("buy_client_policy",
                 "Search Transaction by Client Name:",
                 header_columns.get("client_policy")));
-        panelMap.put("Payment of Premium", createCRUDPanel("payment",
+        panelMap.put("Client Payment of Premium", createCRUDPanel("client_payment_of_premium",
                 "Search Payment by Client Name:",
                 header_columns.get("payment")));
-        panelMap.put("Doctor Consultation", createCRUDPanel("consultation",
+        panelMap.put("Doctor Consultation Claim", createCRUDPanel("doctor_consultation_claim",
                 "Search Consultation by Client Name:",
                 header_columns.get("claim")));
-        panelMap.put("Hospitalization", createCRUDPanel("hospitalization",
+        panelMap.put("Hospitalization Claim", createCRUDPanel("hospitalization_claim",
                 "Search Hospitalization by Client Name:",
                 header_columns.get("claim")));
-        panelMap.put("Payout to Hospital", createCRUDPanel("hospital_payout",
+        panelMap.put("Payout to Hospital", createCRUDPanel("payout_to_hospital",
                 "Search Payout by Hospital Name:",
                 header_columns.get("payout")));
-        panelMap.put("Payout to Doctor", createCRUDPanel("doctor_payout",
+        panelMap.put("Payout to Doctor", createCRUDPanel("payout_to_doctor",
                 "Search Payout by Doctor Name:",
                 header_columns.get("payout")));
-        panelMap.put("Request LOA", createCRUDPanel("loa_transaction",
+        panelMap.put("Request LOA", createCRUDPanel("request_loa",
                 "Search LOA by Client Name:",
                 header_columns.get("loa")));
 
