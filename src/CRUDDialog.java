@@ -1,7 +1,5 @@
 import javax.swing.*;
 import java.awt.*;
-import java.util.HashMap;
-import java.util.Map;
 
 public class CRUDDialog extends BaseDialog {
     public CRUDDialog(JFrame parent, String title, BaseDialog.Mode mode, String[] columns) {
@@ -12,6 +10,11 @@ public class CRUDDialog extends BaseDialog {
 
     @Override
     protected JComponent createInputField(String column) {
+        if (column.toLowerCase().endsWith("_id") ){
+            JTextField idField = new JTextField(10);
+            idField.setEnabled(false);
+            return idField;
+        }
         if (column.toLowerCase().contains("date"))
             return new JTextField(10);
         else if (column.toLowerCase().contains("is_") ||
@@ -26,7 +29,21 @@ public class CRUDDialog extends BaseDialog {
                 comboBox.addItem("false");
             }
             return comboBox;
-        } else {
+        }else if (column.equalsIgnoreCase("coverage_type")) {
+            JComboBox<String> comboBox = new JComboBox<>();
+            comboBox.addItem("Inpatient");
+            comboBox.addItem("Outpatient");
+            comboBox.addItem("Emergency");
+            comboBox.addItem("Preventive");
+            return comboBox;
+        } else if (column.equalsIgnoreCase("payment_period")){
+            JComboBox<String> comboBox = new JComboBox<>();
+            comboBox.addItem("Monthly");
+            comboBox.addItem("Quarterly");
+            comboBox.addItem("Semi-Annual");
+            comboBox.addItem("Annual");
+            return comboBox;
+        }else {
             return new JTextField(20);
         }
     }
