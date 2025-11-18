@@ -61,7 +61,7 @@ CREATE TABLE IF NOT EXISTS doctor (
 	data_status BOOLEAN NOT NULL
 );
 
-CREATE TABLE IF NOT EXISTS client_payment(
+CREATE TABLE IF NOT EXISTS client_payment (
 	payment_ID INT PRIMARY KEY AUTO_INCREMENT,
     member_ID INT,
     plan_ID INT,
@@ -73,7 +73,7 @@ CREATE TABLE IF NOT EXISTS client_payment(
     FOREIGN KEY (plan_ID) REFERENCES policy(plan_ID)
 );
 
-CREATE TABLE IF NOT EXISTS payout(
+CREATE TABLE IF NOT EXISTS payout (
 	payout_ID INT PRIMARY KEY AUTO_INCREMENT,
     hospital_ID INT NOT NULL,
     doctor_ID INT NOT NULL,
@@ -87,7 +87,7 @@ CREATE TABLE IF NOT EXISTS payout(
     FOREIGN KEY (doctor_ID) REFERENCES doctor(doctor_ID)
 );
 
-CREATE TABLE IF NOT EXISTS claim(
+CREATE TABLE IF NOT EXISTS claim (
 	claim_ID INT PRIMARY KEY AUTO_INCREMENT,
     member_ID INT NOT NULL,
     illness_ID INT NOT NULL,
@@ -103,7 +103,7 @@ CREATE TABLE IF NOT EXISTS claim(
     FOREIGN KEY (doctor_ID) REFERENCES doctor(doctor_ID)
 );
 
-CREATE TABLE IF NOT EXISTS client_policy(
+CREATE TABLE IF NOT EXISTS client_policy (
 	policy_ID INT PRIMARY KEY AUTO_INCREMENT,
     member_ID INT NOT NULL,
     plan_ID INT NOT NULL,
