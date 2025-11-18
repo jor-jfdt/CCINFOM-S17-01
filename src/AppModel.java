@@ -492,6 +492,12 @@ public class AppModel {
 		}
 	}
 	
+	Map<String, String> getDatabaseTableAttributes(String table_name) {
+		if (tables.getOrDefault(table_name, null) == null)
+			throw new IllegalArgumentException("No such table named " + table_name + " in " + DATABASE_NAME);
+		return tables.get(table_name);
+	}
+	
 	// Prints success messages to the console.
 	private void printSuccessLog(AM_SMSG msgtype, Object... params) {
 		switch (msgtype) {
