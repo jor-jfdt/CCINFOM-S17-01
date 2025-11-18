@@ -421,6 +421,8 @@ public class AppModel {
 	
 	List<Map<String, Object>> getTableEntries(String table_name, String where_name, String where_value, String... requested_columns_in_order) throws SQLException {
 		// SELECT <requested_columns_in_order> FROM <table_name> WHERE <where_name> = <where_value>
+		if (null == where_name)
+			return getTableEntries(table_name, requested_columns_in_order);
 		return processQuery(AppModel.SQLUtils.makeSQLTemplateSelectFromWhere(table_name, where_name, requested_columns_in_order), where_value);
 	}
 	
