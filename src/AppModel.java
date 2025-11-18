@@ -419,11 +419,31 @@ public class AppModel {
 		return processQuery(AppModel.SQLUtils.makeSQLTemplateSelectFrom(table_name, requested_columns_in_order));
 	}
 	
-	List<Map<String, Object>> getTableEntries(String table_name, String where_name, String where_value, String... requested_columns_in_order) throws SQLException {
+	List<Map<String, Object>> getTableEntries(String table_name, String where_name, Object where_value, String... requested_columns_in_order) throws SQLException {
 		// SELECT <requested_columns_in_order> FROM <table_name> WHERE <where_name> = <where_value>
 		if (null == where_name)
 			return getTableEntries(table_name, requested_columns_in_order);
 		return processQuery(AppModel.SQLUtils.makeSQLTemplateSelectFromWhere(table_name, where_name, requested_columns_in_order), where_value);
+	}
+	
+	List<Map<String, Object>> getTableEntriesInverted(String table_name, String... excluded_columns) throws SQLException {
+		List<String> available_columns = new ArrayList<>(tables.get(table_name).keySet());
+		String[] included_columns;
+		for (String e : excluded_columns)
+			available_columns.remove(e);
+		included_columns = available_columns.toArray(new String[0]);
+		return getTableEntries(table_name, included_columns);
+	}
+	
+	List<Map<String, Object>> getTableEntriesInverted(String table_name, String where_name, Object where_value, String... excluded_columns) throws SQLException {	
+		if (null == where_name)
+			return getTableEntries(table_name, excluded_columns);
+		List<String> available_columns = new ArrayList<>(tables.get(table_name).keySet());
+		String[] included_columns;
+		for (String e : excluded_columns)
+			available_columns.remove(e);
+		included_columns = available_columns.toArray(new String[0]);
+		return getTableEntries(table_name, where_name, where_value, included_columns);
 	}
 	
 	// U. Updates an attribute value of an entry within a table assigned to the target primary key.

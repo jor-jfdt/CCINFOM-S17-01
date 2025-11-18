@@ -7,7 +7,7 @@ import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableRowSorter;
 public class _Driver {
 	public static void main(String[] args) throws SQLException, ClassNotFoundException, IOException {
-		AppModel model = new AppModel("insurance_database", "root", "123456password");
+		AppModel model = new AppModel("insurance_database", "root", "hatdogAngPassword");
 		// Sample SQL query pass with table test
 		model.enterDatabase();
 		/*
@@ -40,7 +40,7 @@ public class _Driver {
 			"last_name", "birth_date", "is_employee", "sex", "is_active", "data_status")
 		);
 		*/
-		DefaultTableModel dtm = model.makeTableModel(model.getTableEntries("clients", "*"));
+		DefaultTableModel dtm = model.makeTableModel(model.getTableEntriesInverted("clients", "data_status"));
 		TableRowSorter<DefaultTableModel> trs = model.filterOnTableRowSorter(dtm, "@!6,7,8 f");
 		model.readSQLFile("generate_reports.sql");
 		model.closeDatabase();
