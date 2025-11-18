@@ -3,6 +3,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.IOException;
 import java.sql.SQLException;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
 
@@ -51,9 +52,11 @@ public class AppController implements ActionListener {
         for (int i = 0; i < appGUI.getRecordPanel().getOptions().length; i++) {
             if (e.getSource() == appGUI.getRecordPanel().getOptions()[i]) {
                 System.out.println("Record Option " + appGUI.getRecordPanel().getOptions()[i].getText() + " is Clicked.");
+
                 appGUI.getRecordPanel().showCard(appGUI.getRecordPanel().getOptions()[i].getText());
+
                 try {
-                    List<Map<String, Object>> queryResult = appModel.getTableEntries(appGUI.getRecordPanel().getOptions()[i].getText(), "*");
+                    List<Map<String, Object>> queryResult = appModel.getTableEntriesInverted(appGUI.getRecordPanel().getOptions()[i].getText().toLowerCase(), "data_status", true, "data_status");
                     DefaultTableModel dtm = appModel.makeTableModel(queryResult);
                     appGUI.getRecordPanel().setTable(appGUI.getRecordPanel().getOptions()[i].getText().toLowerCase(), dtm);
                 } catch(SQLException ex) {
@@ -76,6 +79,7 @@ public class AppController implements ActionListener {
         }
 
         //insert logic for determining what option was clicked in Record Panel to determine the fields to show in Add/Update Dialog
+        //save state here
         if (e.getSource() == appGUI.getRecordPanel().getAddButton()) {
             // Open Add Dialog
             //appGUI.getRecordPanel().AddButtonFeatures(appGUI);
