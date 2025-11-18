@@ -9,7 +9,7 @@ USE insurance_database;
 */
 
 CREATE TABLE IF NOT EXISTS clients (
-	member_id INT PRIMARY KEY AUTO_INCREMENT,
+	member_id INT PRIMARY KEY AUTO_INCREMENT NOT NULL,
     first_name VARCHAR(127) NOT NULL,
     last_name VARCHAR(127) NOT NULL,
     middle_name VARCHAR(127),
@@ -22,14 +22,14 @@ CREATE TABLE IF NOT EXISTS clients (
 );
 
 CREATE TABLE IF NOT EXISTS illness (
-	illness_id INT PRIMARY KEY AUTO_INCREMENT,
+	illness_id INT PRIMARY KEY AUTO_INCREMENT NOT NULL,
     illness_name VARCHAR(127) NOT NULL,
     icd10_code VARCHAR(7) UNIQUE NOT NULL,
 	data_status BOOLEAN NOT NULL
 );
 
 CREATE TABLE IF NOT EXISTS policy (
-	plan_id INT PRIMARY KEY AUTO_INCREMENT,
+	plan_id INT PRIMARY KEY AUTO_INCREMENT NOT NULL,
     plan_name VARCHAR(127) NOT NULL,
     coverage_type VARCHAR(127) NOT NULL,
 	coverage_limit FLOAT NOT NULL,
@@ -40,7 +40,7 @@ CREATE TABLE IF NOT EXISTS policy (
 );
 
 CREATE TABLE IF NOT EXISTS hospital (
-	hospital_id INT PRIMARY KEY AUTO_INCREMENT,
+	hospital_id INT PRIMARY KEY AUTO_INCREMENT NOT NULL,
     hospital_name VARCHAR(127),
     address VARCHAR(127),
     city VARCHAR(127),
@@ -51,7 +51,7 @@ CREATE TABLE IF NOT EXISTS hospital (
 );
 
 CREATE TABLE IF NOT EXISTS doctor (
-	doctor_id INT PRIMARY KEY AUTO_INCREMENT,
+	doctor_id INT PRIMARY KEY AUTO_INCREMENT NOT NULL,
     first_name VARCHAR(127) NOT NULL,
     last_name VARCHAR(127) NOT NULL,
     middle_name VARCHAR(127),
@@ -62,58 +62,58 @@ CREATE TABLE IF NOT EXISTS doctor (
 );
 
 CREATE TABLE IF NOT EXISTS client_payment (
-	payment_ID INT PRIMARY KEY AUTO_INCREMENT,
-    member_ID INT,
-    plan_ID INT,
+	payment_id INT PRIMARY KEY AUTO_INCREMENT NOT NULL,
+    member_id INT,
+    plan_id INT,
     amount FLOAT,
     payment_date DATE,
     payment_method VARCHAR(127),
     premium_payment_status VARCHAR(127),
-    FOREIGN KEY (member_ID) REFERENCES clients(member_ID),
-    FOREIGN KEY (plan_ID) REFERENCES policy(plan_ID)
+    FOREIGN KEY (member_id) REFERENCES clients(member_id),
+    FOREIGN KEY (plan_id) REFERENCES policy(plan_id)
 );
 
 CREATE TABLE IF NOT EXISTS payout (
-	payout_ID INT PRIMARY KEY AUTO_INCREMENT,
-    hospital_ID INT NOT NULL,
-    doctor_ID INT NOT NULL,
+	payout_id INT PRIMARY KEY AUTO_INCREMENT NOT NULL,
+    hospital_id INT NOT NULL,
+    doctor_id INT NOT NULL,
     service_date DATE NOT NULL,
     service_type VARCHAR(127) NOT NULL,
     service_amount FLOAT NOT NULL,
     payout_amount FLOAT NOT NULL,
     payout_date DATE,
     payout_status VARCHAR(127) NOT NULL,
-    FOREIGN KEY (hospital_ID) REFERENCES hospital(hospital_ID),
-    FOREIGN KEY (doctor_ID) REFERENCES doctor(doctor_ID)
+    FOREIGN KEY (hospital_id) REFERENCES hospital(hospital_id),
+    FOREIGN KEY (doctor_id) REFERENCES doctor(doctor_id)
 );
 
 CREATE TABLE IF NOT EXISTS claim (
-	claim_ID INT PRIMARY KEY AUTO_INCREMENT,
-    member_ID INT NOT NULL,
-    illness_ID INT NOT NULL,
-    hospital_ID INT NOT NULL,
-    doctor_ID INT NOT NULL,
+	claim_id INT PRIMARY KEY AUTO_INCREMENT NOT NULL,
+    member_id INT NOT NULL,
+    illness_id INT NOT NULL,
+    hospital_id INT NOT NULL,
+    doctor_id INT NOT NULL,
     service_date DATE NOT NULL,
     service_type VARCHAR(127) NOT NULL,
     service_amount FLOAT NOT NULL,
     covered_amount FLOAT NOT NULL,
     claim_status VARCHAR(15),
-    FOREIGN KEY (member_ID) REFERENCES clients(member_ID),
-    FOREIGN KEY (hospital_ID) REFERENCES hospital(hospital_ID),
-    FOREIGN KEY (doctor_ID) REFERENCES doctor(doctor_ID)
+    FOREIGN KEY (member_id) REFERENCES clients(member_id),
+	FOREIGN KEY (illness_id) REFERENCES illness(illness_id),
+    FOREIGN KEY (hospital_id) REFERENCES hospital(hospital_id),
+    FOREIGN KEY (doctor_id) REFERENCES doctor(doctor_id)
 );
 
 CREATE TABLE IF NOT EXISTS client_policy (
-	policy_ID INT PRIMARY KEY AUTO_INCREMENT,
-    member_ID INT NOT NULL,
-    plan_ID INT NOT NULL,
-    company_ID INT NOT NULL,
+	policy_id INT PRIMARY KEY AUTO_INCREMENT NOT NULL,
+    member_id INT NOT NULL,
+    plan_id INT NOT NULL,
     preexisting_illnesses VARCHAR(127) NOT NULL,
     effective_date DATE NOT NULL,
     expiry_date DATE NOT NULL,
     policy_status VARCHAR(127) NOT NULL,
-    FOREIGN KEY (member_ID) REFERENCES clients(member_ID),
-    FOREIGN KEY(plan_ID) REFERENCES policy(plan_ID)
+    FOREIGN KEY (member_id) REFERENCES clients(member_id),
+    FOREIGN KEY (plan_id) REFERENCES policy(plan_id)
 );
 
 CREATE TABLE IF NOT EXISTS loa (
