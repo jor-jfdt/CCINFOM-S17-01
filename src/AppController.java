@@ -1,13 +1,19 @@
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.table.DefaultTableModel;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.io.IOException;
+import java.sql.SQLException;
+import java.util.List;
+import java.util.Map;
 
 public class AppController implements ActionListener {
     public AppController(AppGUI appGUI, AppModel appModel) {
         this.appGUI = appGUI;
         this.appModel = appModel;
         this.appGUI.addMenuButtonListener(this);
+    }
+    public void connectToDatabase() throws SQLException, IOException, ClassNotFoundException {
+        appModel.enterDatabase();
     }
 
     @Override
@@ -44,6 +50,14 @@ public class AppController implements ActionListener {
             if (e.getSource() == appGUI.getRecordPanel().getOptions()[i]) {
                 System.out.println("Record Option " + appGUI.getRecordPanel().getOptions()[i].getText() + " is Clicked.");
                 appGUI.getRecordPanel().showCard(appGUI.getRecordPanel().getOptions()[i].getText());
+                try {
+                    List<Map<String, Object>> queryResult = appModel.getTableEntries(appGUI.getRecordPanel().getOptions()[i].getText(), "*");
+                    DefaultTableModel dtm = appModel.makeTableModel(queryResult);
+                    appGUI.getRecordPanel().setTable(appGUI.getRecordPanel().getOptions()[i].getText().toLowerCase(), dtm);
+                } catch(SQLException ex) {
+                    ex.printStackTrace();
+
+                }
             }
         }
         for (int i = 0; i < appGUI.getTransactionPanel().getOptions().length; i++) {

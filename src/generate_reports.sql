@@ -2,13 +2,13 @@ USE insurance_database;
 
 #Sum of all overdue payments
 SELECT SUM(amount) AS TotalOverduePayments
-FROM client c JOIN client_payment cp
+FROM clients c JOIN client_payment cp
 ON c.member_id = cp.member_ID
 WHERE LOWER(premium_payment_status) = "overdue";
 
 #Sum of all amounts that are complete
 SELECT SUM(amount)
-FROM client c JOIN client_payment cp
+FROM clients c JOIN client_payment cp
 ON c.member_id = cp.member_ID
 WHERE LOWER(premium_payment_status) = "complete";
 
@@ -30,7 +30,7 @@ SELECT cpr.plan_name, COUNT(claim_ID) AS Claims
 FROM claim cr
 JOIN client_policy cp
 ON cr.member_ID = cp.member_ID
-JOIN company_policy cpr
+JOIN policy cpr
 ON cpr.plan_ID = cp.plan_ID
 WHERE LOWER(claim_status) = "complete"
 GROUP BY(policy_ID)

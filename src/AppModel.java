@@ -38,7 +38,7 @@ public class AppModel {
 	}
 	
 	// ---------------------------------------------------------------
-	// ---------------- Utilities for checking input -----------------
+	// ---------------- Utilities for SQL processing -----------------
 	// ---------------------------------------------------------------
 	static class SQLUtils {
 		// Creates a PreparedStatement template for processQuery
@@ -75,14 +75,14 @@ public class AppModel {
 			identifiers[identifiers.length - 2] = where_name;
 			identifiers[identifiers.length - 1] = table_name;
 			if (null == table_name || null == where_name || null == ordered_column_names || !assessAllIdentifiers(identifiers))
-				throw new IllegalArgumentException("makeSQLTemplateSelectFrom: please check your parameters");
+				throw new IllegalArgumentException("makeSQLTemplateSelectFromWhere: please check your parameters");
 			return "SELECT " + String.join(",", ordered_column_names) + " FROM " + table_name + " WHERE " + where_name + " = ?;";
 		}
 		// Creates a PreparedStatement template for processQuery
 		// Returns "DELETE FROM <table_name> WHERE <where_key_name> = ?;"
 		static String makeSQLTemplateDeleteFromWhere(String table_name, String where_key_name) {
 			if (null == table_name || null == where_key_name || !assessAllIdentifiers(table_name, where_key_name))
-				throw new IllegalArgumentException("makeSQLTemplateDeleteFromOneWhere: please check your parameters");
+				throw new IllegalArgumentException("makeSQLTemplateDeleteFromWhere: please check your parameters");
 			return "DELETE FROM " + table_name + " WHERE " + where_key_name + " = ?;";
 		}
 		// Creates a DATE in form of a string that can be understood by SQL
@@ -417,6 +417,13 @@ public class AppModel {
 	List<Map<String, Object>> getTableEntries(String table_name, String... requested_columns_in_order) throws SQLException {
 		// SELECT <requested_columns_in_order> FROM <table_name>
 		return processQuery(AppModel.SQLUtils.makeSQLTemplateSelectFrom(table_name, requested_columns_in_order));
+	}
+	
+	List<Map<String, Object>> getTableEntries(String table_name, String where_name, String where_value, String... requested_columns_in_order) throws SQLException {
+		// SELECT <requested_columns_in_order> FROM <table_name> WHERE <where_name> = <where_value>
+		if (null == where_name)
+			return getTableEntries(table_name, requested_columns_in_order);
+		return processQuery(AppModel.SQLUtils.makeSQLTemplateSelectFromWhere(table_name, where_name, requested_columns_in_order), where_value);
 	}
 	
 	// U. Updates an attribute value of an entry within a table assigned to the target primary key.
