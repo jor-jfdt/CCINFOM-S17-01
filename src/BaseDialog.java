@@ -2,6 +2,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionListener;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 public abstract class BaseDialog extends JDialog {
@@ -132,7 +133,7 @@ public abstract class BaseDialog extends JDialog {
     }
 
     public Map<String, String> getFieldValues() {
-        Map<String, String> field = new HashMap<>();
+        Map<String, String> field = new LinkedHashMap<>();
         for (String column : columns) {
             field.put(column, getFieldValue(column));
         }

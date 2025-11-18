@@ -1,9 +1,12 @@
+import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.IOException;
 import java.sql.SQLException;
 import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
@@ -51,17 +54,17 @@ public class AppController implements ActionListener {
         }
         for (int i = 0; i < appGUI.getRecordPanel().getOptions().length; i++) {
             if (e.getSource() == appGUI.getRecordPanel().getOptions()[i]) {
+                currentRecordType = appGUI.getRecordPanel().getOptions()[i].getText();
                 System.out.println("Record Option " + appGUI.getRecordPanel().getOptions()[i].getText() + " is Clicked.");
-
                 appGUI.getRecordPanel().showCard(appGUI.getRecordPanel().getOptions()[i].getText());
 
                 try {
                     List<Map<String, Object>> queryResult = appModel.getTableEntriesInverted(appGUI.getRecordPanel().getOptions()[i].getText().toLowerCase(), "data_status", true, "data_status");
+                    currentColumns = queryResult.getFirst().keySet().toArray(new String[0]);
                     DefaultTableModel dtm = appModel.makeTableModel(queryResult);
                     appGUI.getRecordPanel().setTable(appGUI.getRecordPanel().getOptions()[i].getText().toLowerCase(), dtm);
                 } catch(SQLException ex) {
                     ex.printStackTrace();
-
                 }
             }
         }
@@ -83,7 +86,35 @@ public class AppController implements ActionListener {
         if (e.getSource() == appGUI.getRecordPanel().getAddButton()) {
             // Open Add Dialog
             //appGUI.getRecordPanel().AddButtonFeatures(appGUI);
-            System.out.println("Add Button Clicked");
+            if (currentRecordType == null) {
+                JOptionPane.showMessageDialog(appGUI, "Please select a record option first.", "Select Option", JOptionPane.WARNING_MESSAGE);
+            } else {
+                CRUDDialog dialog = new CRUDDialog(
+                        appGUI,
+                        "Add " + currentRecordType,
+                        BaseDialog.Mode.ADD,
+                        currentColumns
+                );
+
+                dialog.setVisible(true);
+
+                if (dialog.isConfirmed()) {
+                    System.out.println("Confirm button clicked!");
+                    System.out.println("Values: " + dialog.getFieldValues());
+                    try {
+                        //appModel.insertIntoTable(currentRecordType.toLowerCase(), Arrays.copyOfRange(dialog.getFieldValues().values().toArray(), 1, currentColumns.length));
+                        // Refresh table
+                        List<Map<String, Object>> queryResult = appModel.getTableEntriesInverted(currentRecordType.toLowerCase(), "data_status", true, "data_status");
+                        DefaultTableModel dtm = appModel.makeTableModel(queryResult);
+                        appGUI.getRecordPanel().setTable(currentRecordType.toLowerCase(), dtm);
+                    } catch (SQLException ex) {
+                        ex.printStackTrace();
+                        JOptionPane.showMessageDialog(appGUI, "Error inserting record: " + ex.getMessage(), "Database Error", JOptionPane.ERROR_MESSAGE);
+                    }
+                } else {
+                    System.out.println("Cancel button clicked!");
+                }
+            }
         } else if (e.getSource() == appGUI.getRecordPanel().getUpdateButton()) {
             // Open Update Dialog
             System.out.println("Update Button Clicked");
@@ -277,7 +308,8 @@ public class AppController implements ActionListener {
 		
         return ReportGenerator.generateTableReport(title, headers, data);
     }
-
+    private String currentRecordType;
+    private String[] currentColumns;
     private final AppGUI appGUI;
     private final AppModel appModel;
 }
