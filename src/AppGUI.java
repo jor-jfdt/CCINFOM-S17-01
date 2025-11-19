@@ -219,8 +219,11 @@ public class AppGUI extends JFrame {
         recordPanel.addAddButtonListener(listener);
         recordPanel.addUpdateButtonListener(listener);
         recordPanel.addVoidButtonListener(listener);
+
 		transactionPanel.addAddButtonListener(listener);
         transactionPanel.addUpdateButtonListener(listener);
+
+        reportPanel.addGenerateReportListener(listener);
     }
 
     private final JPanel cardContainer;

@@ -133,6 +133,10 @@ public class ReportPanel extends BasePanel {
         }
     }
 
+    public JButton getGenerateButton() {
+        return generateButton;
+    }
+
     public String getReportContent() {
         JEditorPane activePane = getReportEditorPane();
         if (activePane != null) {

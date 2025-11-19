@@ -16,8 +16,6 @@ public class AppController implements ActionListener {
         this.appGUI = appGUI;
         this.appModel = appModel;
         this.appGUI.addMenuButtonListener(this);
-
-        setupReportPanel();
     }
     public void connectToDatabase() throws SQLException, IOException, ClassNotFoundException {
         appModel.enterDatabase();
@@ -219,12 +217,13 @@ public class AppController implements ActionListener {
                 }
             }
         }
-    }
-
-    private void setupReportPanel() {
-        ReportPanel reportPanel = appGUI.getReportPanel();
-
-        reportPanel.addGenerateReportListener(e -> generateReport());
+        if (e.getSource() == appGUI.getReportPanel().getGenerateButton()) {
+            if (appGUI.getReportPanel().getActivePanelKey() == "empty")
+                JOptionPane.showMessageDialog(appGUI, "Please select a report option first.", "Select Option", JOptionPane.WARNING_MESSAGE);
+            else
+                generateReport();
+            System.out.println("Generate Report Button Clicked");
+        }
     }
 
     private void generateReport() {
