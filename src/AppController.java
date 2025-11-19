@@ -157,6 +157,30 @@ public class AppController implements ActionListener {
                         System.out.println("Pre-fill " + col + " with value: " + rowData[Arrays.asList(currentColumns).indexOf(col)]);
                     }
                     dialog.setVisible(true);
+                    if (dialog.isConfirmed()) {
+                        System.out.println("Confirm button clicked!");
+                        System.out.println("Values: " + dialog.getFieldValues());
+                        try {
+                            Map<String, Object> field_values = dialog.getFieldValues();
+                            String[] attributes = appModel.getDatabaseTableAttributes(currentRecordType).keySet().toArray(new String[0]);
+                            if (attributes[attributes.length - 1].equalsIgnoreCase("data_status")) field_values.put("data_status", true);
+                            Object[] values = field_values.values().toArray();
+                            //convert into prehistoric for loop
+                            for (int i = 1; i < currentColumns.length; i++) {
+                                System.out.println("Updating " + currentColumns[i] + " to value: " + values[i]);
+                                appModel.updateColumnValueOfId(currentRecordType.toLowerCase(), currentColumns[i], Integer.parseInt((String)values[0]) , values[i]);
+                            }
+                            List<Map<String, Object>> queryResult = appModel.getTableEntriesInverted(currentRecordType.toLowerCase(), "data_status", true, "data_status");
+                            DefaultTableModel dtm = appModel.makeTableModel(queryResult);
+                            appGUI.getRecordPanel().setTable(currentRecordType.toLowerCase(), dtm);
+                        } catch (SQLException ex) {
+                            ex.printStackTrace();
+                            JOptionPane.showMessageDialog(appGUI, "Error inserting record: " + ex.getMessage(), "Database Error", JOptionPane.ERROR_MESSAGE);
+                        }
+                    } else {
+                        System.out.println("Cancel button clicked!");
+                    }
+
                 }
             }
             System.out.println("Update Button Clicked");
