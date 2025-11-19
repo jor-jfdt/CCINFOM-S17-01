@@ -350,25 +350,27 @@ public class AppController implements ActionListener {
     }
 
     private String generateFinancialReport(Integer month, int year) throws Exception {
-		String date_filters = "MONTH(cp.payment_date) = ? OR YEAR(cp.payment_date) = ?";
-		Double overdues = (Double)appModel.processQuery(
+		String date_filters_specific_oc = "(MONTH(cp.payment_date) = ? AND YEAR(cp.payment_date) = ?)";
+		String date_filters_all_oc = "(MONTH(cp.payment_date) <= ? AND YEAR(cp.payment_date) = ?)";
+		String date_filters_specific_p = "(MONTH(payout_date) = ? AND YEAR(payout_date) = ?)";
+		String date_filters_all_p = "(MONTH(payout_date) <= ? AND YEAR(payout_date) = ?)";
+		Double overdues = (Double)(appModel.processQuery(
 			"SELECT COALESCE(SUM(amount), 0) AS total_overdue_payments " + 
-			"FROM clients c JOIN client_payment cp " +
-			"ON c.member_id = cp.member_id " +
-			"WHERE LOWER(cp.premium_payment_status) = ? AND " + date_filters + ";"
-		, "overdue", month, year).get(1).get("total_overdue_payments");
-		Double completes = (Double)appModel.processQuery(
-			"SELECT COALESCE(SUM(amount), 0) AS total_overdue_payments " + 
-			"FROM clients c JOIN client_payment cp " +
-			"ON c.member_id = cp.member_id " +
-			"WHERE LOWER(cp.premium_payment_status) = ? AND " + date_filters + ";"
-		, "complete", month, year).get(1).get("total_complete_payments");
-		Double payouts = (Double)appModel.processQuery(
-			"SELECT COALESCE(SUM(amount), 0) AS total_complete_payments " +
-			"FROM clients c JOIN client_payment cp " +
-			"ON c.member_id = cp.member_id " +
-			"WHERE LOWER(premium_payment_status) = ? AND " + date_filters + ";"
-		, "complete", month, year).get(1).get("total_payouts");
+			"FROM clients c JOIN client_payment cp " + 
+			"ON c.member_id = cp.member_id " + 
+			"WHERE LOWER(premium_payment_status) = ? AND " + (month == null ? date_filters_all_oc : date_filters_specific_oc) + ";"
+		, "overdue", month == null ? 12 : month, year).get(1).get("total_overdue_payments"));
+		Double completes = (Double)(appModel.processQuery(
+			"SELECT COALESCE(SUM(amount), 0) AS total_complete_payments " + 
+			"FROM clients c JOIN client_payment cp " + 
+			"ON c.member_id = cp.member_id " + 
+			"WHERE LOWER(premium_payment_status) = ? AND " + (month == null ? date_filters_all_oc : date_filters_specific_oc) + ";"
+		, "complete", month == null ? 12 : month, year).get(1).get("total_complete_payments"));
+		Double payouts = (Double)(appModel.processQuery(
+			"SELECT COALESCE(SUM(payout_amount), 0) AS total_payouts " + 
+			"FROM payout " + 
+			"WHERE LOWER(payout_status) = ? AND " + (month == null ? date_filters_all_p : date_filters_specific_p) + ";"
+		, "complete", month == null ? 12 : month, year).get(1).get("total_payouts"));
 		
         // Placeholder values - replace with actual database queries later
         double revenue = completes != null ? completes : 0.0;
@@ -380,7 +382,8 @@ public class AppController implements ActionListener {
     }
 	
     private String generateHealthProviderReport(Integer month, int year) throws Exception {
-		String date_filters = "MONTH(cr.service_date) = ? OR YEAR(cr.service_date) = ?";
+		String date_filters_specific = "(MONTH(cr.service_date) = ? AND YEAR(cr.service_date) = ?)";
+		String date_filters_all = "(MONTH(cr.service_date) <= ? AND YEAR(cr.service_date) = ?)";
         // Note: This list is one-based, i.e. the index starts at 1.
 		// Returns List<   Map<         String,          Object>>
 		//          ^       ^             ^                ^
@@ -390,10 +393,10 @@ public class AppController implements ActionListener {
 			"SELECT hr.hospital_name, COUNT(claim_id) AS hospital_claims " +
 			"FROM claim cr " +
 			"JOIN hospital hr ON cr.hospital_id = hr.hospital_id " +
-			"WHERE LOWER(claim_status) = ? AND " + date_filters + " " +
+			"WHERE LOWER(claim_status) = ? AND " + (month == null ? date_filters_all : date_filters_specific) + " " +
 			"GROUP BY hr.hospital_id " +
 			"ORDER BY hospital_claims DESC;"
-		, "complete", month, year);
+		, "complete", month == null ? 12 : month, year);
 		Object[] values;
 		// Placeholder - replace with actual database queries later
         String[] headers = {"Hospital Name", "Claims Count"};
@@ -401,11 +404,11 @@ public class AppController implements ActionListener {
 			put(headers[0], "hospital_name");
 			put(headers[1], "hospital_claims");
 		}};
-        Object[][] data = new Object[matrix.size()][headers.length];
+        Object[][] data = new Object[matrix.size() - 1][headers.length];
 		for (int i = 1; i < matrix.size(); i++) {
 			Map<String, Object> row = matrix.get(i);
 			for (int j = 0; j < headers.length; j++) {
-				data[i][j] = row.get(correspondents.get(headers[j]));
+				data[i - 1][j] = row.get(correspondents.get(headers[j]));
 			}
 		}
 		
@@ -418,7 +421,8 @@ public class AppController implements ActionListener {
     }
 
     private String generatePolicyReport(Integer month, int year) throws Exception {
-		String date_filters = "MONTH(claim.service_date) = ? OR YEAR(claim.service_date) = ?";
+		String date_filters_specific = "(MONTH(claim.service_date) = ? AND YEAR(claim.service_date) = ?)";
+		String date_filters_all = "(MONTH(claim.service_date) <= ? AND YEAR(claim.service_date) = ?)";
 		// Note: This list is one-based, i.e. the index starts at 1.
 		// Returns List<   Map<         String,          Object>>
 		//          ^       ^             ^                ^
@@ -432,10 +436,10 @@ public class AppController implements ActionListener {
 			"FROM claim " +
 			"JOIN client_policy ON claim.member_id = client_policy.member_id " +
 			"JOIN policy ON policy.plan_id = client_policy.plan_id " +
-			"WHERE LOWER(claim_status) = ? AND " + date_filters + " " +
+			"WHERE LOWER(claim_status) = ? AND " + (month == null ? date_filters_all : date_filters_specific) + " " +
 			"GROUP BY policy.plan_id " +
 			"ORDER BY policy_claims DESC, total_service_amount DESC, total_covered_amount DESC; "
-		, "complete", month, year);
+		, "complete", month == null ? 12 : month, year);
         Object[] values;
 		// Placeholder - replace with actual database queries later
         String[] headers = {"Policy Name", "Claims Count", "Total Service Amount", "Total Covered Amount"};
@@ -445,11 +449,11 @@ public class AppController implements ActionListener {
 			put(headers[2], "total_service_amount");
 			put(headers[3], "total_covered_amount");
 		}};
-		Object[][] data = new Object[matrix.size()][headers.length];
+		Object[][] data = new Object[matrix.size() - 1][headers.length];
 		for (int i = 1; i < matrix.size(); i++) {
 			Map<String, Object> row = matrix.get(i);
 			for (int j = 0; j < headers.length; j++) {
-				data[i][j] = row.get(correspondents.get(headers[j]));
+				data[i - 1][j] = row.get(correspondents.get(headers[j]));
 			}
 		}
 		
@@ -462,7 +466,8 @@ public class AppController implements ActionListener {
     }
 
     private String generateIllnessTrendReport(Integer month, int year) throws Exception {
-		String date_filters = "MONTH(claim.service_date) = ? OR YEAR(claim.service_date) = ?";
+		String date_filters_specific = "(MONTH(claim.service_date) = ? AND YEAR(claim.service_date) = ?)";
+		String date_filters_all = "(MONTH(claim.service_date) <= ? AND YEAR(claim.service_date) = ?)";
 		// Note: This list is one-based, i.e. the index starts at 1.
 		// Returns List<   Map<         String,          Object>>
 		//          ^       ^             ^                ^
@@ -476,10 +481,10 @@ public class AppController implements ActionListener {
 			"COALESCE(SUM(covered_amount), 0) AS total_covered_amount " +
 			"FROM claim " +
 			"JOIN illness ON claim.illness_id = illness.illness_id " +
-			"WHERE LOWER(claim_status) = ? AND " + date_filters + " " +
+			"WHERE LOWER(claim_status) = ? AND " + (month == null ? date_filters_all : date_filters_specific) + " " +
 			"GROUP BY illness.illness_id " +
 			"ORDER BY illness_claims DESC, total_service_amount DESC, total_covered_amount DESC; "
-		, "complete", month, year);
+		, "complete", month == null ? 12 : month, year);
         Object[] values;
         // Placeholder - replace with actual database queries later
         String[] headers = {"Illness Name", "Claims Count", "Total Service Amount", "Total Covered Amount"};
@@ -489,11 +494,11 @@ public class AppController implements ActionListener {
 			put(headers[2], "total_service_amount");
 			put(headers[3], "total_covered_amount");
 		}};
-        Object[][] data = new Object[matrix.size()][headers.length];
+        Object[][] data = new Object[matrix.size() - 1][headers.length];
 		for (int i = 1; i < matrix.size(); i++) {
 			Map<String, Object> row = matrix.get(i);
 			for (int j = 0; j < headers.length; j++) {
-				data[i][j] = row.get(correspondents.get(headers[j]));
+				data[i - 1][j] = row.get(correspondents.get(headers[j]));
 			}
 		}
 		
