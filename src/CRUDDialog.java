@@ -29,11 +29,10 @@ public class CRUDDialog extends BaseDialog {
         }
         else if (column.equalsIgnoreCase("coverage_type")) {
             JComboBox<String> comboBox = new JComboBox<>();
-            comboBox.addItem("Comprehensive");
-            comboBox.addItem("In-Patient");
-            comboBox.addItem("Out-Patient");
-            comboBox.addItem("Emergency Only");
-            comboBox.addItem("All-Access");
+            comboBox.addItem("Inpatient");
+            comboBox.addItem("Outpatient");
+            comboBox.addItem("Emergency");
+            comboBox.addItem("Preventive");
             return comboBox;
         } else if (column.equalsIgnoreCase("payment_period")){
             JComboBox<String> comboBox = new JComboBox<>();
@@ -42,16 +41,31 @@ public class CRUDDialog extends BaseDialog {
             comboBox.addItem("Semi-Annual");
             comboBox.addItem("Annual");
             return comboBox;
-        } else if (column.equalsIgnoreCase("payment_method")) {
-            JComboBox<String> comboBox = new JComboBox<>();
-            comboBox.addItem("Credit Card");
-            comboBox.addItem("Debit Card");
-            comboBox.addItem("Bank Transfer");
-            comboBox.addItem("Cash");
-            comboBox.addItem("Check");
-            comboBox.addItem("Mobile Payment");
-            return comboBox;
-        }else {
+        } else if (column.contains("status")) {
+            if (column.contains("claim") ||
+                column.contains("loa")){
+                JComboBox<String> comboBox = new JComboBox<>();
+                comboBox.addItem("Pending");
+                comboBox.addItem("Approved");
+                comboBox.addItem("Denied");
+                return comboBox;
+            } else if (column.contains("payout") ||
+                       column.contains("payment")) {
+                JComboBox<String> comboBox = new JComboBox<>();
+                comboBox.addItem("Complete");
+                comboBox.addItem("Pending");
+                comboBox.addItem("Partial");
+                comboBox.addItem("Processing");
+                return comboBox;
+            }
+            else {
+                JComboBox<String> comboBox = new JComboBox<>();
+                comboBox.addItem("Active");
+                comboBox.addItem("Inactive");
+                return comboBox;
+            }
+        }
+        else {
             return new JTextField(20);
         }
     }

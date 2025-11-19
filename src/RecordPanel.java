@@ -36,7 +36,7 @@ public class RecordPanel extends BasePanel {
                         "birth_date", "is_employee", "sex", "is_active" });
 
         header_columns.put("policy",
-                new String[] { "policy_id", "policy_name", "coverage_type", "coverage_limit",
+                new String[] { "plan_id", "policy_name", "coverage_type", "coverage_limit",
                         "payment_period", "inclusion" });
 
         header_columns.put("hospital",
