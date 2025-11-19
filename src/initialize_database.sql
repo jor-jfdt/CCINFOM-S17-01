@@ -75,18 +75,17 @@ CREATE TABLE IF NOT EXISTS client_policy (
 
 CREATE TABLE IF NOT EXISTS client_payment (
 	payment_id INT PRIMARY KEY AUTO_INCREMENT NOT NULL,
-	member_id INT,
-    plan_id INT,
+    client_plan_id INT,
     amount FLOAT,
     payment_date DATE,
     payment_method VARCHAR(127),
     premium_payment_status VARCHAR(127),
-	FOREIGN KEY (member_id) REFERENCES clients(member_id),
-    FOREIGN KEY (plan_id) REFERENCES policy(plan_id)
+    FOREIGN KEY (client_plan_id) REFERENCES client_policy(policy_id)
 );
 
 CREATE TABLE IF NOT EXISTS payout (
 	payout_id INT PRIMARY KEY AUTO_INCREMENT NOT NULL,
+	claim_id INT NOT NULL,
     hospital_id INT NOT NULL,
     doctor_id INT NOT NULL,
     service_date DATE NOT NULL,
@@ -101,7 +100,7 @@ CREATE TABLE IF NOT EXISTS payout (
 
 CREATE TABLE IF NOT EXISTS claim (
 	claim_id INT PRIMARY KEY AUTO_INCREMENT NOT NULL,
-    member_id INT NOT NULL,
+	client_plan_id INT NOT NULL,
     illness_id INT NOT NULL,
     hospital_id INT NOT NULL,
     doctor_id INT NOT NULL,
@@ -110,7 +109,7 @@ CREATE TABLE IF NOT EXISTS claim (
     service_amount FLOAT NOT NULL,
     covered_amount FLOAT NOT NULL,
     claim_status VARCHAR(15),
-    FOREIGN KEY (member_id) REFERENCES clients(member_id),
+    FOREIGN KEY (client_plan_id) REFERENCES client_policy(client_plan_id),
 	FOREIGN KEY (illness_id) REFERENCES illness(illness_id),
     FOREIGN KEY (hospital_id) REFERENCES hospital(hospital_id),
     FOREIGN KEY (doctor_id) REFERENCES doctor(doctor_id)
@@ -118,13 +117,13 @@ CREATE TABLE IF NOT EXISTS claim (
 
 CREATE TABLE IF NOT EXISTS loa (
 	request_id INT PRIMARY KEY AUTO_INCREMENT NOT NULL,
-	plan_id INT NOT NULL,
+	client_plan_id INT NOT NULL,
 	hospital_id INT NOT NULL,
 	doctor_id INT NOT NULL,
 	illness_id INT NOT NULL,
 	service_type VARCHAR(127) NOT NULL,
 	loa_status VARCHAR(15) NOT NULL,
-	FOREIGN KEY (plan_id) REFERENCES client_policy(policy_id),
+	FOREIGN KEY (client_plan_id) REFERENCES client_policy(policy_id),
 	FOREIGN KEY (hospital_id) REFERENCES hospital(hospital_id),
 	FOREIGN KEY (doctor_id) REFERENCES doctor(doctor_id),
 	FOREIGN KEY (illness_id) REFERENCES illness(illness_id)
