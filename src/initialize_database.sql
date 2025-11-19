@@ -62,7 +62,7 @@ CREATE TABLE IF NOT EXISTS doctor (
 );
 
 CREATE TABLE IF NOT EXISTS client_policy (
-	policy_id INT PRIMARY KEY AUTO_INCREMENT NOT NULL,
+	client_plan_id INT PRIMARY KEY AUTO_INCREMENT NOT NULL,
     member_id INT NOT NULL,
     plan_id INT NOT NULL,
     preexisting_illnesses VARCHAR(127) NOT NULL,
@@ -86,16 +86,10 @@ CREATE TABLE IF NOT EXISTS client_payment (
 CREATE TABLE IF NOT EXISTS payout (
 	payout_id INT PRIMARY KEY AUTO_INCREMENT NOT NULL,
 	claim_id INT NOT NULL,
-    hospital_id INT NOT NULL,
-    doctor_id INT NOT NULL,
-    service_date DATE NOT NULL,
-    service_type VARCHAR(127) NOT NULL,
-    service_amount FLOAT NOT NULL,
-    payout_amount FLOAT NOT NULL,
     payout_date DATE,
+    payout_amount FLOAT NOT NULL,
     payout_status VARCHAR(127) NOT NULL,
-    FOREIGN KEY (hospital_id) REFERENCES hospital(hospital_id),
-    FOREIGN KEY (doctor_id) REFERENCES doctor(doctor_id)
+    FOREIGN KEY (claim_id) REFERENCES hospital(claim_id),
 );
 
 CREATE TABLE IF NOT EXISTS claim (
