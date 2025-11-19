@@ -115,15 +115,19 @@ public class AppController implements ActionListener {
                     System.out.println("Confirm button clicked!");
                     System.out.println("Values: " + dialog.getFieldValues());
                     try {
-                        //appModel.insertIntoTable(currentRecordType.toLowerCase(), Arrays.copyOfRange(dialog.getFieldValues().values().toArray(), 1, currentColumns.length));
                         // Refresh table
                         Map<String, Object> field_values = dialog.getFieldValues();
                         String[] attributes = appModel.getDatabaseTableAttributes(currentRecordType).keySet().toArray(new String[0]);
+
                         if (attributes[attributes.length - 1].equalsIgnoreCase("data_status")) field_values.put("data_status", true);
-                        appModel.insertIntoTable(currentRecordType.toLowerCase(), Arrays.copyOfRange(field_values.values().toArray(), 1, field_values.size()));
-                        List<Map<String, Object>> queryResult = appModel.getTableEntriesInverted(currentRecordType.toLowerCase(), "data_status", true, "data_status");
-                        DefaultTableModel dtm = appModel.makeTableModel(queryResult);
-                        appGUI.getRecordPanel().setTable(currentRecordType.toLowerCase(), dtm);
+
+                        if (validateFields(attributes, field_values, true)) {
+                            //abort the insertion if validation fails
+                            appModel.insertIntoTable(currentRecordType.toLowerCase(), Arrays.copyOfRange(field_values.values().toArray(), 1, field_values.size()));
+                            List<Map<String, Object>> queryResult = appModel.getTableEntriesInverted(currentRecordType.toLowerCase(), "data_status", true, "data_status");
+                            DefaultTableModel dtm = appModel.makeTableModel(queryResult);
+                            appGUI.getRecordPanel().setTable(currentRecordType.toLowerCase(), dtm);
+                        }
                     } catch (SQLException ex) {
                         ex.printStackTrace();
                         JOptionPane.showMessageDialog(appGUI, "Error inserting record: " + ex.getMessage(), "Database Error", JOptionPane.ERROR_MESSAGE);
@@ -495,6 +499,23 @@ public class AppController implements ActionListener {
                 JOptionPane.showMessageDialog(appGUI, "Please fill all required fields.", "Input Error", JOptionPane.ERROR_MESSAGE);
                 return false;
             }
+
+            if (headers[i].contains("date")) {
+                try {
+                    if (AppModel.SQLUtils.dateIsValid(value.toString())) {
+                        // Valid
+                        System.out.println("Valid date: " + value);
+                    } else {
+                        AppModel.SQLUtils.stringToDate(value.toString());
+                        JOptionPane.showMessageDialog(appGUI, "Invalid date format for " + headers[i], "Input Error", JOptionPane.ERROR_MESSAGE);
+                        return false;
+                    }
+                } catch (Exception ex) {
+                    JOptionPane.showMessageDialog(appGUI, "Invalid date format for " + headers[i], "Input Error", JOptionPane.ERROR_MESSAGE);
+                    return false;
+                }
+                continue;
+            }
             if (headers[i].toLowerCase().endsWith("_id")) {
                 try {
                     int fk = Integer.parseInt(value.toString());
@@ -504,7 +525,33 @@ public class AppController implements ActionListener {
                     return false;
                 }
             }
-        }
+            if (headers[i].contains("name")) {
+                String name = value.toString();
+                try {
+
+                if (!name.matches("^[a-zA-Z .'-]+$") || !AppModel.SQLUtils.stringFitsShort(name)) {
+                    JOptionPane.showMessageDialog(appGUI, "Invalid characters in name for " + headers[i], "Input Error", JOptionPane.ERROR_MESSAGE);
+                    return false;
+                }
+                } catch (Exception ex) {
+                    JOptionPane.showMessageDialog(appGUI, "Invalid characters in name for " + headers[i], "Input Error", JOptionPane.ERROR_MESSAGE);
+                    return false;
+                }
+            }
+            if (headers[i].contains("amount") || headers[i].contains("limit")) {
+                try {
+                    double amount = Double.parseDouble(value.toString());
+                    if (amount < 0 || value.toString().matches("^([-+]?)((\\.?\\d+)|(\\d+\\.?(\\d+)?))$")) {
+                        JOptionPane.showMessageDialog(appGUI, "Amount cannot be negative for " + headers[i], "Input Error", JOptionPane.ERROR_MESSAGE);
+                        return false;
+                    }
+                } catch (NumberFormatException ex) {
+                    JOptionPane.showMessageDialog(appGUI, "Invalid amount format for " + headers[i], "Input Error", JOptionPane.ERROR_MESSAGE);
+                    return false;
+                }
+            }
+
+            }
         return true;
     }
     private String currentTransactionType;
