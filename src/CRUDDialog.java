@@ -29,10 +29,11 @@ public class CRUDDialog extends BaseDialog {
         }
         else if (column.equalsIgnoreCase("coverage_type")) {
             JComboBox<String> comboBox = new JComboBox<>();
-            comboBox.addItem("Inpatient");
-            comboBox.addItem("Outpatient");
-            comboBox.addItem("Emergency");
-            comboBox.addItem("Preventive");
+            comboBox.addItem("Comprehensive");
+            comboBox.addItem("In-Patient");
+            comboBox.addItem("Out-Patient");
+            comboBox.addItem("Emergency Only");
+            comboBox.addItem("All-Access");
             return comboBox;
         } else if (column.equalsIgnoreCase("payment_period")){
             JComboBox<String> comboBox = new JComboBox<>();
@@ -41,7 +42,16 @@ public class CRUDDialog extends BaseDialog {
             comboBox.addItem("Semi-Annual");
             comboBox.addItem("Annual");
             return comboBox;
-        } else if (column.contains("status")) {
+        } else if (column.equalsIgnoreCase("payment_method")) {
+            JComboBox<String> comboBox = new JComboBox<>();
+            comboBox.addItem("Credit Card");
+            comboBox.addItem("Debit Card");
+            comboBox.addItem("Online Payment");
+            comboBox.addItem("Bank Transfer");
+            comboBox.addItem("Cash");
+            comboBox.addItem("Check");
+            return comboBox;
+        }else if (column.contains("status")) {
             if (column.contains("claim") ||
                 column.contains("loa")){
                 JComboBox<String> comboBox = new JComboBox<>();
