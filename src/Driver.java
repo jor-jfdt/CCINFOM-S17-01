@@ -13,7 +13,7 @@ public class Driver {
 		AppController controller = new AppController(app, model);
         controller.connectToDatabase();
 		
-		//populateDatabase(model);
+		populateDatabase(model);
     }
 
 	private static void configureLookAndFeel() {
@@ -141,6 +141,82 @@ public class Driver {
 		model.insertIntoTable("doctor", "Beverly", "Crusher", "C", "General Practitioner", "09171001009", "crusher@enterprise.com", true);
 		model.insertIntoTable("doctor", "Drake", "Ramoray", "F", "Neurosurgeon", "09171001010", "drake@days.com", true);
 
-		
+		// 5. CLIENT_POLICY TABLE (10 Entries)
+		// Note: Assumes Member IDs 1-10 and Plan IDs 1-10 exist.
+		// Schema: client_plan_id, member_id, plan_id, preexisting_illnesses, effective_date, expiry_date, policy_status
+		model.insertIntoTable("client_policy", 1, 1, "None", LocalDate.of(2023, 1, 15), LocalDate.of(2024, 1, 15), "Active");
+		model.insertIntoTable("client_policy", 2, 2, "Asthma", LocalDate.of(2023, 2, 1), LocalDate.of(2024, 2, 1), "Active");
+		model.insertIntoTable("client_policy", 3, 5, "None", LocalDate.of(2023, 3, 10), LocalDate.of(2024, 3, 10), "Active");
+		model.insertIntoTable("client_policy", 4, 2, "Diabetes", LocalDate.of(2023, 1, 1), LocalDate.of(2024, 1, 1), "Active");
+		model.insertIntoTable("client_policy", 5, 7, "Hypertension", LocalDate.of(2022, 12, 1), LocalDate.of(2023, 12, 1), "Expired");
+		model.insertIntoTable("client_policy", 6, 8, "None", LocalDate.of(2023, 6, 15), LocalDate.of(2024, 6, 15), "Active");
+		model.insertIntoTable("client_policy", 7, 2, "None", LocalDate.of(2023, 7, 1), LocalDate.of(2024, 7, 1), "Active");
+		model.insertIntoTable("client_policy", 8, 3, "Allergies", LocalDate.of(2023, 8, 20), LocalDate.of(2024, 8, 20), "Active");
+		model.insertIntoTable("client_policy", 9, 8, "None", LocalDate.of(2023, 9, 5), LocalDate.of(2024, 9, 5), "Active");
+		model.insertIntoTable("client_policy", 10, 1, "None", LocalDate.of(2023, 10, 1), LocalDate.of(2024, 10, 1), "Active");
+
+		// 6. CLIENT_PAYMENT TABLE (10 Entries)
+		// Schema: payment_id, client_plan_id, amount, payment_date, payment_method, status
+		model.insertIntoTable("client_payment", 1, 12000.0f, LocalDate.of(2023, 1, 15), "Credit Card", "Complete");
+		model.insertIntoTable("client_payment", 2, 25000.0f, LocalDate.of(2023, 2, 1), "Bank Transfer", "Complete");
+		model.insertIntoTable("client_payment", 3, 45000.0f, LocalDate.of(2023, 3, 10), "Check", "Complete");
+		model.insertIntoTable("client_payment", 4, 80000.0f, LocalDate.of(2023, 1, 1), "Credit Card", "Complete");
+		model.insertIntoTable("client_payment", 1, 12000.0f, LocalDate.of(2022, 12, 1), "Cash", "Complete");
+		model.insertIntoTable("client_payment", 5, 35000.0f, LocalDate.of(2023, 6, 15), "Bank Transfer", "Complete");
+		model.insertIntoTable("client_payment", 6, 8000.0f, LocalDate.of(2023, 7, 1), "GCash", "Complete");
+		model.insertIntoTable("client_payment", 2, 0.0f, LocalDate.of(2023, 8, 20), "N/A", "Overdue");
+		model.insertIntoTable("client_payment", 3, 22500.0f, LocalDate.of(2023, 9, 5), "Check", "Partial");
+		model.insertIntoTable("client_payment", 4, 80000.0f, LocalDate.of(2023, 10, 1), "Credit Card", "Complete");
+
+
+		// 8. CLAIM TABLE (10 Entries)
+		// Schema: claim_id, client_plan_id, illness_id, hospital_id, doctor_id, service_date, service_type, service_amount, covered_amount, claim_status
+		// Schema: member_id, illness_id, hospital_id, doctor_id, service_date, service_type, service_amount, covered_amount, claim_status
+		model.insertIntoTable("claim", 1, 1, 1, 1, LocalDate.of(2023, 4, 1), "Consultation", 1500.0f, 1500.0f, "Complete");
+		model.insertIntoTable("claim", 2, 7, 2, 2, LocalDate.of(2023, 5, 10), "Surgery", 50000.0f, 45000.0f, "Complete");
+		model.insertIntoTable("claim", 3, 4, 3, 3, LocalDate.of(2023, 6, 5), "Laboratory", 2500.0f, 2500.0f, "Complete");
+		model.insertIntoTable("claim", 4, 3, 4, 4, LocalDate.of(2023, 2, 14), "Consultation", 2000.0f, 2000.0f, "Complete");
+		model.insertIntoTable("claim", 5, 2, 5, 5, LocalDate.of(2023, 3, 3), "Emergency", 5000.0f, 5000.0f, "Complete");
+		model.insertIntoTable("claim", 6, 6, 6, 6, LocalDate.of(2023, 7, 22), "Checkup", 1000.0f, 1000.0f, "Complete");
+		model.insertIntoTable("claim", 7, 5, 7, 7, LocalDate.of(2023, 8, 30), "X-Ray", 1200.0f, 1200.0f, "Complete");
+		model.insertIntoTable("claim", 8, 8, 8, 8, LocalDate.of(2023, 9, 12), "Consultation", 1500.0f, 1500.0f, "Complete");
+		model.insertIntoTable("claim", 9, 9, 9, 9, LocalDate.of(2023, 10, 1), "Confinement", 25000.0f, 20000.0f, "In Progress");
+		model.insertIntoTable("claim", 10, 10, 10, 10, LocalDate.of(2023, 11, 5), "Surgery", 80000.0f, 80000.0f, "In Progress");
+
+
+
+
+
+
+		// 7. PAYOUT TABLE (10 Entries)
+		// Schema: payout_id, claim_id, payout_date, payout_amount, payout_status
+		model.insertIntoTable("payout", 1, LocalDate.of(2023, 4, 1), 1500.0f, "Complete");
+		model.insertIntoTable("payout", 2, LocalDate.of(2023, 5, 10), 45000.0f, "Complete");
+		model.insertIntoTable("payout", 3, LocalDate.of(2023, 6, 5), 2500.0f, "Complete");
+		model.insertIntoTable("payout", 4, LocalDate.of(2023, 2, 14), 2000.0f, "Complete");
+		model.insertIntoTable("payout", 5, LocalDate.of(2023, 3, 3), 5000.0f, "Complete");
+		model.insertIntoTable("payout", 6, LocalDate.of(2023, 7, 22), 1000.0f, "Complete");
+		model.insertIntoTable("payout", 7, LocalDate.of(2023, 8, 30), 1200.0f, "Complete");
+		model.insertIntoTable("payout", 8, LocalDate.of(2023, 9, 12), 1500.0f, "Complete");
+		model.insertIntoTable("payout", 9, LocalDate.of(2023, 10, 1), 20000.0f, "Pending");
+		model.insertIntoTable("payout", 10, LocalDate.of(2023, 11, 5), 80000.0f, "Processing");
+
+
+
+
+		// 9. LOA (Letter of Authorization) TABLE (10 Entries)
+		// Schema: plan_id (Refers to ClientPolicy ID), hospital_id, doctor_id, illness_id, service_type, loa_status
+		// Schema: request_id, client_plan_id, hospital_id, doctor_id, illness_id, service_type, loa_status
+		// Note: plan_id here refers to the Client_Policy PK (1-10 generated above)
+		model.insertIntoTable("loa", 1, 1, 1, 1, "Consultation", "Approved");
+		model.insertIntoTable("loa", 2, 2, 2, 7, "Surgery", "Approved");
+		model.insertIntoTable("loa", 3, 3, 3, 4, "Laboratory", "Approved");
+		model.insertIntoTable("loa", 4, 4, 4, 3, "Consultation", "Approved");
+		model.insertIntoTable("loa", 5, 5, 5, 2, "Emergency", "Approved");
+		model.insertIntoTable("loa", 6, 6, 6, 6, "Checkup", "Approved");
+		model.insertIntoTable("loa", 7, 7, 7, 5, "X-Ray", "Approved");
+		model.insertIntoTable("loa", 8, 8, 8, 8, "Consultation", "Approved");
+		model.insertIntoTable("loa", 9, 9, 9, 9, "Confinement", "Pending");
+		model.insertIntoTable("loa", 10, 10, 10, 10, "Surgery", "Approved");
 	}
 }
