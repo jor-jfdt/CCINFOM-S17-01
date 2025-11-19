@@ -354,26 +354,6 @@ public class AppController implements ActionListener {
 		String date_filters_all_oc = "(MONTH(cp.payment_date) <= ? AND YEAR(cp.payment_date) = ?)";
 		String date_filters_specific_p = "(MONTH(payout_date) = ? AND YEAR(payout_date) = ?)";
 		String date_filters_all_p = "(MONTH(payout_date) <= ? AND YEAR(payout_date) = ?)";
-		/*
-		Double overdues = (Double)(appModel.processQuery(
-			"SELECT COALESCE(SUM(amount), 0) AS total_overdue_payments " + 
-			"FROM clients c JOIN client_payment cp " +
-			"ON c.member_id = cp.member_id " +
-			"WHERE LOWER(cp.premium_payment_status) = ? AND " + date_filters + ";"
-		, "overdue", month, year).get(1).get("total_overdue_payments"));
-		Double completes = (Double)(appModel.processQuery(
-			"SELECT COALESCE(SUM(amount), 0) AS total_complete_payments " + 
-			"FROM clients c JOIN client_payment cp " +
-			"ON c.member_id = cp.member_id " +
-			"WHERE LOWER(cp.premium_payment_status) = ? AND " + date_filters + ";"
-		, "complete", month, year).get(1).get("total_complete_payments"));
-		Double payouts = (Double)(appModel.processQuery(
-			"SELECT COALESCE(SUM(amount), 0) AS total_payouts " +
-			"FROM clients c JOIN client_payment cp " +
-			"ON c.member_id = cp.member_id " +
-			"WHERE LOWER(cp.premium_payment_status) = ? AND " + date_filters + ";"
-		, "complete", month, year).get(1).get("total_payouts"));
-		*/
 		Double overdues = (Double)(appModel.processQuery(
 			"SELECT COALESCE(SUM(amount), 0) AS total_overdue_payments " + 
 			"FROM clients c JOIN client_payment cp " + 
@@ -391,8 +371,6 @@ public class AppController implements ActionListener {
 			"FROM payout " + 
 			"WHERE LOWER(payout_status) = ? AND " + (month == null ? date_filters_all_p : date_filters_specific_p) + ";"
 		, "complete", month == null ? 12 : month, year).get(1).get("total_payouts"));
-		
-		System.out.println(overdues + " " + completes + " " + payouts);
 		
         // Placeholder values - replace with actual database queries later
         double revenue = completes != null ? completes : 0.0;
