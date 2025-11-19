@@ -79,9 +79,6 @@ public class ReportPanel extends BasePanel {
         generateButton = new JButton("Generate Report");
         UITools.styleButton(generateButton);
 
-        exportButton = new JButton("Export Report");
-        UITools.styleButton(exportButton);
-
         JPanel selectionPanel = createSelectionPanel();
 
         rightPanel.add(selectionPanel, BorderLayout.NORTH);
@@ -105,7 +102,6 @@ public class ReportPanel extends BasePanel {
 
         southButtonPanel.setLayout(new FlowLayout(FlowLayout.RIGHT));
         southButtonPanel.add(generateButton);
-        southButtonPanel.add(exportButton);
     }
 
     //no header columns needed for report panel
@@ -114,18 +110,6 @@ public class ReportPanel extends BasePanel {
 
     public void addGenerateReportListener(ActionListener listener) {
         generateButton.addActionListener(listener);
-    }
-
-    public void addExportReportListener(ActionListener listener) {
-        exportButton.addActionListener(listener);
-    }
-
-    public void addMonthChangeListener(ActionListener listener) {
-        monthChooser.addActionListener(listener);
-    }
-
-    public void addYearChangeListener(PropertyChangeListener listener) {
-        yearChooser.addPropertyChangeListener("year",listener);
     }
 
     public void enableYearSelection(boolean enable) {
@@ -177,6 +161,5 @@ public class ReportPanel extends BasePanel {
 
     private JComboBox<String> monthChooser;
     private JYearChooser yearChooser;
-    private JButton exportButton;
     private JButton generateButton;
 }

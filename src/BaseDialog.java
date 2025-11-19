@@ -1,7 +1,5 @@
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionListener;
-import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
@@ -17,7 +15,7 @@ public abstract class BaseDialog extends JDialog {
         this.confirmed = false;
         this.mode = mode;
         this.columns = columns;
-        this.inputFields = new java.util.HashMap<>();
+        this.inputFields = new LinkedHashMap<>();
 
         this.setPreferredSize(new Dimension(width, height));
         this.setResizable(false);

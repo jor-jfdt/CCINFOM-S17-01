@@ -247,6 +247,10 @@ public abstract class BasePanel extends BackgroundPanel {
         return header_columns;
     }
 
+    public Map<String, JTable> getTableMap() {
+        return tableMap;
+    }
+
     protected void updateComponent() {
         if (options != null) {
             Dimension buttonSize = UITools.getLeftPanelButtonSize();

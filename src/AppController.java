@@ -72,6 +72,7 @@ public class AppController implements ActionListener {
         //Connect Transaction Panel Options to Database
         for (int i = 0; i < appGUI.getTransactionPanel().getOptions().length; i++) {
             if (e.getSource() == appGUI.getTransactionPanel().getOptions()[i]) {
+                currentTransactionType = appGUI.getTransactionPanel().getOptions()[i].getText().replace(" ", "_").toLowerCase();
                 for (String key : appGUI.getTransactionPanel().getHeaderColumns().keySet()) {
                     if (appGUI.getTransactionPanel().getOptions()[i].getText().toLowerCase().contains(key.replace("_", " "))) {
                         tableName = key.replace(" ", "_");
@@ -137,13 +138,85 @@ public class AppController implements ActionListener {
                 }
             }
         } else if (e.getSource() == appGUI.getRecordPanel().getUpdateButton()) {
-            // Open Update Dialog
+            if (currentRecordType == null) {
+                JOptionPane.showMessageDialog(appGUI, "Please select a record option first.", "Select Option", JOptionPane.WARNING_MESSAGE);
+            } else {
+                if (appGUI.getRecordPanel().getTableMap().get(currentRecordType).getSelectedRow() == -1) {
+                    JOptionPane.showMessageDialog(appGUI, "Please select a record to update.", "No Selection", JOptionPane.WARNING_MESSAGE);
+                } else {
+                    int selectedRow = appGUI.getRecordPanel().getTableMap().get(currentRecordType).getSelectedRow();
+                    CRUDDialog dialog = new CRUDDialog(
+                            appGUI,
+                            "Update " + currentRecordType,
+                            BaseDialog.Mode.UPDATE,
+                            currentColumns
+                    );
+                    dialog.setVisible(true);
+                }
+            }
             System.out.println("Update Button Clicked");
         } else if (e.getSource() == appGUI.getRecordPanel().getVoidButton()) {
-            // Perform deletion
-            System.out.println("Void Button Clicked");
+            if (currentRecordType == null) {
+                JOptionPane.showMessageDialog(appGUI, "Please select a record option first.", "Select Option", JOptionPane.WARNING_MESSAGE);
+            } else {
+                if (appGUI.getRecordPanel().getTableMap().get(currentRecordType).getSelectedRow() == -1) {
+                    JOptionPane.showMessageDialog(appGUI, "Please select a record to delete.", "No Selection", JOptionPane.WARNING_MESSAGE);
+                } else {
+                    int selectedRow = appGUI.getRecordPanel().getTableMap().get(currentRecordType).getSelectedRow();
+                    CRUDDialog dialog = new CRUDDialog(
+                            appGUI,
+                            "Delete " + currentRecordType,
+                            BaseDialog.Mode.DELETE,
+                            currentColumns
+                    );
+                    dialog.setVisible(true);
+                }
+            }
+            System.out.println("Delete Button Clicked");
         }
+        if (e.getSource() == appGUI.getTransactionPanel().getAddButton()) {
+            if (currentTransactionType == null) {
+                JOptionPane.showMessageDialog(appGUI, "Please select a transaction option first.", "Select Option", JOptionPane.WARNING_MESSAGE);
+            } else {
+                String baseKey = appGUI.getTransactionPanel().getPanelToTableKey().get(currentTransactionType);
+                String[] headers = appGUI.getTransactionPanel().getHeaderColumns().get(baseKey);
 
+                System.out.println("currentTransactionType: " + currentTransactionType);
+                System.out.println("baseKey: " + baseKey);
+                System.out.println("headers: " + (headers == null ? "null" : java.util.Arrays.toString(headers)));
+
+                if (baseKey == null || headers == null) {
+                    JOptionPane.showMessageDialog(appGUI, "Invalid transaction type or header columns not found.", "Error", JOptionPane.ERROR_MESSAGE);
+                    return;
+                }
+                CRUDDialog dialog = new CRUDDialog(
+                        appGUI,
+                        "Add " + currentTransactionType,
+                        BaseDialog.Mode.ADD,
+                        headers
+                );
+                dialog.setVisible(true);
+            }
+            System.out.println("Transaction Add Button Clicked");
+        } else if (e.getSource() == appGUI.getTransactionPanel().getUpdateButton()) {
+            if (currentTransactionType == null) {
+                JOptionPane.showMessageDialog(appGUI, "Please select a transaction option first.", "Select Option", JOptionPane.WARNING_MESSAGE);
+            } else {
+                JTable table = appGUI.getTransactionPanel().getTableMap().get(currentTransactionType);
+                if (table.getSelectedRow() == -1) {
+                    JOptionPane.showMessageDialog(appGUI, "Please select a record to update.", "No Selection", JOptionPane.WARNING_MESSAGE);
+                } else {
+                    String baseKey = appGUI.getTransactionPanel().getPanelToTableKey().get(currentTransactionType);
+                    CRUDDialog dialog = new CRUDDialog(
+                            appGUI,
+                            "Update " + currentTransactionType,
+                            BaseDialog.Mode.UPDATE,
+                            appGUI.getTransactionPanel().getHeaderColumns().get(baseKey)
+                    );
+                    dialog.setVisible(true);
+                }
+            }
+        }
     }
 
     private void setupReportPanel() {
@@ -329,6 +402,8 @@ public class AppController implements ActionListener {
 		
         return ReportGenerator.generateTableReport(title, headers, data);
     }
+
+    private String currentTransactionType;
     private String currentRecordType;
     private String[] currentColumns;
     private final AppGUI appGUI;

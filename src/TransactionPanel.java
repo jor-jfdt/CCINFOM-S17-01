@@ -21,6 +21,16 @@ public class TransactionPanel extends BasePanel {
         southButtonPanel.add(Box.createHorizontalGlue());
         southButtonPanel.add(addButton);
 
+        panelToTableKey = Map.of(
+                "buy_client_policy", "client_policy",
+                "client_payment_of_premium", "client_payment",
+                "doctor_consultation_claim", "claim",
+                "hospitalization_claim", "claim",
+                "payout_to_hospital", "payout",
+                "payout_to_doctor", "payout",
+                "request_loa", "loa"
+        );
+
         createTransactionOptions();
     }
 
@@ -61,7 +71,7 @@ public class TransactionPanel extends BasePanel {
                 header_columns.get("client_policy")));
         panelMap.put("Client Payment of Premium", createCRUDPanel("client_payment_of_premium",
                 "Search Payment by Client Name:",
-                header_columns.get("payment")));
+                header_columns.get("client_payment")));
         panelMap.put("Doctor Consultation Claim", createCRUDPanel("doctor_consultation_claim",
                 "Search Consultation by Client Name:",
                 header_columns.get("claim")));
@@ -81,6 +91,18 @@ public class TransactionPanel extends BasePanel {
         populateCardLayout(panelMap);
     }
 
+    public JButton getAddButton() {
+        return addButton;
+    }
+
+    public JButton getUpdateButton() {
+        return updateButton;
+    }
+
+    public Map<String, String> getPanelToTableKey() {
+        return panelToTableKey;
+    }
+
     public void addAddButtonListener(ActionListener listener) {
         addButton.addActionListener(listener);
     }
@@ -89,6 +111,7 @@ public class TransactionPanel extends BasePanel {
         updateButton.addActionListener(listener);
     }
 
+    private Map<String, String> panelToTableKey;
     private JButton addButton;
     private JButton updateButton;
 }
