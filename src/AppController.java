@@ -145,12 +145,21 @@ public class AppController implements ActionListener {
                     JOptionPane.showMessageDialog(appGUI, "Please select a record to update.", "No Selection", JOptionPane.WARNING_MESSAGE);
                 } else {
                     int selectedRow = appGUI.getRecordPanel().getTableMap().get(currentRecordType).getSelectedRow();
+                    Object[] rowData = new Object[currentColumns.length];
+                    for (int i = 0; i < currentColumns.length; i++) {
+                        rowData[i] = appGUI.getRecordPanel().getTableMap().get(currentRecordType).getValueAt(selectedRow, i);
+                        System.out.println("rowData[" + i + "]: " + rowData[i]);
+                    }
                     CRUDDialog dialog = new CRUDDialog(
                             appGUI,
                             "Update " + currentRecordType,
                             BaseDialog.Mode.UPDATE,
                             currentColumns
                     );
+                    for (String col : currentColumns) {
+                        dialog.setFieldValue(col, rowData[Arrays.asList(currentColumns).indexOf(col)].toString());
+                        System.out.println("Pre-fill " + col + " with value: " + rowData[Arrays.asList(currentColumns).indexOf(col)]);
+                    }
                     dialog.setVisible(true);
                 }
             }
