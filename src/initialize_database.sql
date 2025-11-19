@@ -89,7 +89,7 @@ CREATE TABLE IF NOT EXISTS payout (
     payout_date DATE,
     payout_amount FLOAT NOT NULL,
     payout_status VARCHAR(127) NOT NULL,
-    FOREIGN KEY (claim_id) REFERENCES hospital(claim_id),
+    FOREIGN KEY (claim_id) REFERENCES hospital(claim_id)
 );
 
 CREATE TABLE IF NOT EXISTS claim (
