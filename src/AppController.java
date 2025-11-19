@@ -273,7 +273,8 @@ public class AppController implements ActionListener {
                 JOptionPane.showMessageDialog(appGUI, "Please select a transaction option first.", "Select Option", JOptionPane.WARNING_MESSAGE);
             } else {
                 JTable table = appGUI.getTransactionPanel().getTableMap().get(currentTransactionType);
-                if (table.getSelectedRow() == -1) {
+                int selectedRow = table.getSelectedRow();
+                if (selectedRow == -1) {
                     JOptionPane.showMessageDialog(appGUI, "Please select a record to update.", "No Selection", JOptionPane.WARNING_MESSAGE);
                 } else {
                     String baseKey = appGUI.getTransactionPanel().getPanelToTableKey().get(currentTransactionType);
@@ -282,15 +283,19 @@ public class AppController implements ActionListener {
                             appGUI,
                             "Update Transaction",
                             BaseDialog.Mode.UPDATE,
-                            appGUI.getTransactionPanel().getHeaderColumns().get(baseKey)
+                            headers
                     );
+                    // Pre-fill dialog fields with selected row values
+                    for (int i = 0; i < headers.length; i++) {
+                        Object value = table.getValueAt(selectedRow, i);
+                        dialog.setFieldValue(headers[i], value != null ? value.toString() : "");
+                    }
                     dialog.setVisible(true);
 
                     if (dialog.isConfirmed()) {
                         try {
                             Map<String, Object> field_values = dialog.getFieldValues();
                             Object[] values = field_values.values().toArray();
-                            // Update each column except PK (assumed first column)
                             for (int i = 1; i < headers.length; i++) {
                                 appModel.updateColumnValueOfId(baseKey, headers[i], Integer.parseInt(values[0].toString()), values[i]);
                             }
@@ -350,163 +355,135 @@ public class AppController implements ActionListener {
     }
 
     private String generateFinancialReport(Integer month, int year) throws Exception {
-		String date_filters_specific_oc = "(MONTH(cp.payment_date) = ? AND YEAR(cp.payment_date) = ?)";
-		String date_filters_all_oc = "(MONTH(cp.payment_date) <= ? AND YEAR(cp.payment_date) = ?)";
-		String date_filters_specific_p = "(MONTH(payout_date) = ? AND YEAR(payout_date) = ?)";
-		String date_filters_all_p = "(MONTH(payout_date) <= ? AND YEAR(payout_date) = ?)";
-		Double overdues = (Double)(appModel.processQuery(
-			"SELECT COALESCE(SUM(amount), 0) AS total_overdue_payments " + 
-			"FROM clients c JOIN client_payment cp " + 
-			"ON c.member_id = cp.member_id " + 
-			"WHERE LOWER(premium_payment_status) = ? AND " + (month == null ? date_filters_all_oc : date_filters_specific_oc) + ";"
-		, "overdue", month == null ? 12 : month, year).get(1).get("total_overdue_payments"));
-		Double completes = (Double)(appModel.processQuery(
-			"SELECT COALESCE(SUM(amount), 0) AS total_complete_payments " + 
-			"FROM clients c JOIN client_payment cp " + 
-			"ON c.member_id = cp.member_id " + 
-			"WHERE LOWER(premium_payment_status) = ? AND " + (month == null ? date_filters_all_oc : date_filters_specific_oc) + ";"
-		, "complete", month == null ? 12 : month, year).get(1).get("total_complete_payments"));
-		Double payouts = (Double)(appModel.processQuery(
-			"SELECT COALESCE(SUM(payout_amount), 0) AS total_payouts " + 
-			"FROM payout " + 
-			"WHERE LOWER(payout_status) = ? AND " + (month == null ? date_filters_all_p : date_filters_specific_p) + ";"
-		, "complete", month == null ? 12 : month, year).get(1).get("total_payouts"));
-		
-        // Placeholder values - replace with actual database queries later
+        String date_filters_specific_oc = "(MONTH(cpay.payment_date) = ? AND YEAR(cpay.payment_date) = ?)";
+        String date_filters_all_oc = "(MONTH(cpay.payment_date) <= ? AND YEAR(cpay.payment_date) = ?)";
+        String date_filters_specific_p = "(MONTH(payout_date) = ? AND YEAR(payout_date) = ?)";
+        String date_filters_all_p = "(MONTH(payout_date) <= ? AND YEAR(payout_date) = ?)";
+        Double overdues = (Double)(appModel.processQuery(
+                "SELECT COALESCE(SUM(amount), 0) AS total_overdue_payments " +
+                        "FROM client_policy cp JOIN client_payment cpay ON cp.client_plan_id = cpay.client_plan_id " +
+                        "WHERE LOWER(premium_payment_status) = ? AND " + (month == null ? date_filters_all_oc : date_filters_specific_oc) + ";",
+                "overdue", month == null ? 12 : month, year
+        ).get(1).get("total_overdue_payments"));
+        Double completes = (Double)(appModel.processQuery(
+                "SELECT COALESCE(SUM(amount), 0) AS total_complete_payments " +
+                        "FROM client_policy cp JOIN client_payment cpay ON cp.client_plan_id = cpay.client_plan_id " +
+                        "WHERE LOWER(premium_payment_status) = ? AND " + (month == null ? date_filters_all_oc : date_filters_specific_oc) + ";",
+                "complete", month == null ? 12 : month, year
+        ).get(1).get("total_complete_payments"));
+        Double payouts = (Double)(appModel.processQuery(
+                "SELECT COALESCE(SUM(payout_amount), 0) AS total_payouts " +
+                        "FROM payout " +
+                        "WHERE LOWER(payout_status) = ? AND " + (month == null ? date_filters_all_p : date_filters_specific_p) + ";",
+                "complete", month == null ? 12 : month, year
+        ).get(1).get("total_payouts"));
+
         double revenue = completes != null ? completes : 0.0;
-		double expenses = payouts != null ? payouts : 0.0;
-		double overDue = overdues != null ? overdues : 0.0;
-		double netIncome = revenue - expenses;
-		
+        double expenses = payouts != null ? payouts : 0.0;
+        double overDue = overdues != null ? overdues : 0.0;
+        double netIncome = revenue - expenses;
+
         return ReportGenerator.generateFinancialReport(month, year, revenue, expenses, netIncome, overDue);
     }
-	
+
     private String generateHealthProviderReport(Integer month, int year) throws Exception {
-		String date_filters_specific = "(MONTH(cr.service_date) = ? AND YEAR(cr.service_date) = ?)";
-		String date_filters_all = "(MONTH(cr.service_date) <= ? AND YEAR(cr.service_date) = ?)";
-        // Note: This list is one-based, i.e. the index starts at 1.
-		// Returns List<   Map<         String,          Object>>
-		//          ^       ^             ^                ^
-		//          |       |             |                |
-		//      list of   rows with  columns of   corresponding values
-		List<Map<String, Object>> matrix = appModel.processQuery(
-			"SELECT hr.hospital_name, COUNT(claim_id) AS hospital_claims " +
-			"FROM claim cr " +
-			"JOIN hospital hr ON cr.hospital_id = hr.hospital_id " +
-			"WHERE LOWER(claim_status) = ? AND " + (month == null ? date_filters_all : date_filters_specific) + " " +
-			"GROUP BY hr.hospital_id " +
-			"ORDER BY hospital_claims DESC;"
-		, "complete", month == null ? 12 : month, year);
-		Object[] values;
-		// Placeholder - replace with actual database queries later
+        String date_filters_specific = "(MONTH(cr.service_date) = ? AND YEAR(cr.service_date) = ?)";
+        String date_filters_all = "(MONTH(cr.service_date) <= ? AND YEAR(cr.service_date) = ?)";
+        List<Map<String, Object>> matrix = appModel.processQuery(
+                "SELECT hr.hospital_name, COUNT(claim_id) AS hospital_claims " +
+                        "FROM claim cr " +
+                        "JOIN hospital hr ON cr.hospital_id = hr.hospital_id " +
+                        "WHERE LOWER(claim_status) = ? AND " + (month == null ? date_filters_all : date_filters_specific) + " " +
+                        "GROUP BY hr.hospital_id " +
+                        "ORDER BY hospital_claims DESC;",
+                "complete", month == null ? 12 : month, year
+        );
         String[] headers = {"Hospital Name", "Claims Count"};
-		HashMap<String, String> correspondents = new HashMap<>() {{
-			put(headers[0], "hospital_name");
-			put(headers[1], "hospital_claims");
-		}};
+        HashMap<String, String> correspondents = new HashMap<>() {{
+            put(headers[0], "hospital_name");
+            put(headers[1], "hospital_claims");
+        }};
         Object[][] data = new Object[matrix.size() - 1][headers.length];
-		for (int i = 1; i < matrix.size(); i++) {
-			Map<String, Object> row = matrix.get(i);
-			for (int j = 0; j < headers.length; j++) {
-				data[i - 1][j] = row.get(correspondents.get(headers[j]));
-			}
-		}
-		
+        for (int i = 1; i < matrix.size(); i++) {
+            Map<String, Object> row = matrix.get(i);
+            for (int j = 0; j < headers.length; j++) {
+                data[i - 1][j] = row.get(correspondents.get(headers[j]));
+            }
+        }
         String title = (month != null) ?
-                String.format("Health Provider Report - %s %d",
-                        new java.text.DateFormatSymbols().getMonths()[month - 1], year) :
+                String.format("Health Provider Report - %s %d", new java.text.DateFormatSymbols().getMonths()[month - 1], year) :
                 String.format("Health Provider Report - %d", year);
-		
         return ReportGenerator.generateTableReport(title, headers, data);
     }
 
     private String generatePolicyReport(Integer month, int year) throws Exception {
-		String date_filters_specific = "(MONTH(claim.service_date) = ? AND YEAR(claim.service_date) = ?)";
-		String date_filters_all = "(MONTH(claim.service_date) <= ? AND YEAR(claim.service_date) = ?)";
-		// Note: This list is one-based, i.e. the index starts at 1.
-		// Returns List<   Map<         String,          Object>>
-		//          ^       ^             ^                ^
-		//          |       |             |                |
-		//      list of   rows with  columns of   corresponding values
-		List<Map<String, Object>> matrix = appModel.processQuery(
-			"SELECT policy.plan_name, " +
-			"COUNT(claim_id) AS policy_claims, " +
-			"COALESCE(SUM(service_amount), 0) AS total_service_amount, " +
-			"COALESCE(SUM(covered_amount), 0) AS total_covered_amount " +
-			"FROM claim " +
-			"JOIN client_policy ON claim.member_id = client_policy.member_id " +
-			"JOIN policy ON policy.plan_id = client_policy.plan_id " +
-			"WHERE LOWER(claim_status) = ? AND " + (month == null ? date_filters_all : date_filters_specific) + " " +
-			"GROUP BY policy.plan_id " +
-			"ORDER BY policy_claims DESC, total_service_amount DESC, total_covered_amount DESC; "
-		, "complete", month == null ? 12 : month, year);
-        Object[] values;
-		// Placeholder - replace with actual database queries later
+        String date_filters_specific = "(MONTH(claim.service_date) = ? AND YEAR(claim.service_date) = ?)";
+        String date_filters_all = "(MONTH(claim.service_date) <= ? AND YEAR(claim.service_date) = ?)";
+        List<Map<String, Object>> matrix = appModel.processQuery(
+                "SELECT policy.plan_name, " +
+                        "COUNT(claim_id) AS policy_claims, " +
+                        "COALESCE(SUM(service_amount), 0) AS total_service_amount, " +
+                        "COALESCE(SUM(covered_amount), 0) AS total_covered_amount " +
+                        "FROM claim " +
+                        "JOIN client_policy ON claim.client_plan_id = client_policy.client_plan_id " +
+                        "JOIN policy ON policy.plan_id = client_policy.plan_id " +
+                        "WHERE LOWER(claim_status) = ? AND " + (month == null ? date_filters_all : date_filters_specific) + " " +
+                        "GROUP BY policy.plan_id " +
+                        "ORDER BY policy_claims DESC, total_service_amount DESC, total_covered_amount DESC; ",
+                "complete", month == null ? 12 : month, year
+        );
         String[] headers = {"Policy Name", "Claims Count", "Total Service Amount", "Total Covered Amount"};
         HashMap<String, String> correspondents = new HashMap<>() {{
-			put(headers[0], "plan_name");
-			put(headers[1], "policy_claims");
-			put(headers[2], "total_service_amount");
-			put(headers[3], "total_covered_amount");
-		}};
-		Object[][] data = new Object[matrix.size() - 1][headers.length];
-		for (int i = 1; i < matrix.size(); i++) {
-			Map<String, Object> row = matrix.get(i);
-			for (int j = 0; j < headers.length; j++) {
-				data[i - 1][j] = row.get(correspondents.get(headers[j]));
-			}
-		}
-		
+            put(headers[0], "plan_name");
+            put(headers[1], "policy_claims");
+            put(headers[2], "total_service_amount");
+            put(headers[3], "total_covered_amount");
+        }};
+        Object[][] data = new Object[matrix.size() - 1][headers.length];
+        for (int i = 1; i < matrix.size(); i++) {
+            Map<String, Object> row = matrix.get(i);
+            for (int j = 0; j < headers.length; j++) {
+                data[i - 1][j] = row.get(correspondents.get(headers[j]));
+            }
+        }
         String title = (month != null) ?
-                String.format("Policy Report - %s %d",
-                        new java.text.DateFormatSymbols().getMonths()[month - 1], year) :
+                String.format("Policy Report - %s %d", new java.text.DateFormatSymbols().getMonths()[month - 1], year) :
                 String.format("Policy Report - %d", year);
-		
         return ReportGenerator.generateTableReport(title, headers, data);
     }
 
     private String generateIllnessTrendReport(Integer month, int year) throws Exception {
-		String date_filters_specific = "(MONTH(claim.service_date) = ? AND YEAR(claim.service_date) = ?)";
-		String date_filters_all = "(MONTH(claim.service_date) <= ? AND YEAR(claim.service_date) = ?)";
-		// Note: This list is one-based, i.e. the index starts at 1.
-		// Returns List<   Map<         String,          Object>>
-		//          ^       ^             ^                ^
-		//          |       |             |                |
-		//      list of   rows with  columns of   corresponding values
-		List<Map<String, Object>> matrix = appModel.processQuery(
-			"SELECT " +
-			"illness.illness_name, " +
-			"COUNT(claim_id) AS illness_claims, " +
-			"COALESCE(SUM(service_amount), 0) AS total_service_amount, " +
-			"COALESCE(SUM(covered_amount), 0) AS total_covered_amount " +
-			"FROM claim " +
-			"JOIN illness ON claim.illness_id = illness.illness_id " +
-			"WHERE LOWER(claim_status) = ? AND " + (month == null ? date_filters_all : date_filters_specific) + " " +
-			"GROUP BY illness.illness_id " +
-			"ORDER BY illness_claims DESC, total_service_amount DESC, total_covered_amount DESC; "
-		, "complete", month == null ? 12 : month, year);
-        Object[] values;
-        // Placeholder - replace with actual database queries later
+        String date_filters_specific = "(MONTH(claim.service_date) = ? AND YEAR(claim.service_date) = ?)";
+        String date_filters_all = "(MONTH(claim.service_date) <= ? AND YEAR(claim.service_date) = ?)";
+        List<Map<String, Object>> matrix = appModel.processQuery(
+                "SELECT illness.illness_name, " +
+                        "COUNT(claim_id) AS illness_claims, " +
+                        "COALESCE(SUM(service_amount), 0) AS total_service_amount, " +
+                        "COALESCE(SUM(covered_amount), 0) AS total_covered_amount " +
+                        "FROM claim " +
+                        "JOIN illness ON claim.illness_id = illness.illness_id " +
+                        "WHERE LOWER(claim_status) = ? AND " + (month == null ? date_filters_all : date_filters_specific) + " " +
+                        "GROUP BY illness.illness_id " +
+                        "ORDER BY illness_claims DESC, total_service_amount DESC, total_covered_amount DESC;",
+                "complete", month == null ? 12 : month, year
+        );
         String[] headers = {"Illness Name", "Claims Count", "Total Service Amount", "Total Covered Amount"};
         HashMap<String, String> correspondents = new HashMap<>() {{
-			put(headers[0], "illness_name");
-			put(headers[1], "illness_claims");
-			put(headers[2], "total_service_amount");
-			put(headers[3], "total_covered_amount");
-		}};
+            put(headers[0], "illness_name");
+            put(headers[1], "illness_claims");
+            put(headers[2], "total_service_amount");
+            put(headers[3], "total_covered_amount");
+        }};
         Object[][] data = new Object[matrix.size() - 1][headers.length];
-		for (int i = 1; i < matrix.size(); i++) {
-			Map<String, Object> row = matrix.get(i);
-			for (int j = 0; j < headers.length; j++) {
-				data[i - 1][j] = row.get(correspondents.get(headers[j]));
-			}
-		}
-		
+        for (int i = 1; i < matrix.size(); i++) {
+            Map<String, Object> row = matrix.get(i);
+            for (int j = 0; j < headers.length; j++) {
+                data[i - 1][j] = row.get(correspondents.get(headers[j]));
+            }
+        }
         String title = (month != null) ?
-                String.format("Illness Trend Report - %s %d",
-                        new java.text.DateFormatSymbols().getMonths()[month - 1], year) :
+                String.format("Illness Trend Report - %s %d", new java.text.DateFormatSymbols().getMonths()[month - 1], year) :
                 String.format("Illness Trend Report - %d", year);
-		
         return ReportGenerator.generateTableReport(title, headers, data);
     }
 

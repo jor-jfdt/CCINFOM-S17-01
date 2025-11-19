@@ -11,9 +11,7 @@ public class CRUDDialog extends BaseDialog {
     @Override
     protected JComponent createInputField(String column) {
         if (column.toLowerCase().endsWith("_id") ){
-            JTextField idField = new JTextField(10);
-            idField.setEnabled(false);
-            return idField;
+            return new JTextField(10);
         }
         if (column.toLowerCase().contains("date"))
             return new JTextField(10);
@@ -43,7 +41,31 @@ public class CRUDDialog extends BaseDialog {
             comboBox.addItem("Semi-Annual");
             comboBox.addItem("Annual");
             return comboBox;
-        }else {
+        } else if (column.contains("status")) {
+            if (column.contains("claim") ||
+                column.contains("loa")){
+                JComboBox<String> comboBox = new JComboBox<>();
+                comboBox.addItem("Pending");
+                comboBox.addItem("Approved");
+                comboBox.addItem("Denied");
+                return comboBox;
+            } else if (column.contains("payout") ||
+                       column.contains("payment")) {
+                JComboBox<String> comboBox = new JComboBox<>();
+                comboBox.addItem("Complete");
+                comboBox.addItem("Pending");
+                comboBox.addItem("Partial");
+                comboBox.addItem("Processing");
+                return comboBox;
+            }
+            else {
+                JComboBox<String> comboBox = new JComboBox<>();
+                comboBox.addItem("Active");
+                comboBox.addItem("Inactive");
+                return comboBox;
+            }
+        }
+        else {
             return new JTextField(20);
         }
     }

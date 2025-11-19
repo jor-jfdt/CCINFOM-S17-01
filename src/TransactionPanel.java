@@ -39,26 +39,27 @@ public class TransactionPanel extends BasePanel {
         header_columns = new HashMap<>();
 
         header_columns.put("client_policy",
-                new String[] { "client_plan_id", "policy_id", "member_id", "preexisting_illness", "effective_Date",
-                "expiry_date", "stats" }
+                new String[] { "client_plan_id", "plan_id", "member_id", "preexisting_illnesses", "effective_Date",
+                "expiry_date", "policy_status" }
         );
 
         header_columns.put("client_payment",
-                new String[] { "payment_id", "client_plan_id", "amount", "payment_date", "payment_method", "status" }
+                new String[] { "payment_id", "client_plan_id", "amount", "payment_date",
+                        "payment_method", "premium_payment_status" }
         );
 
         header_columns.put("claim",
                 new String[] { "claim_id", "client_plan_id", "illness_id", "hospital_id",
-                        "doctor_id", "service_date", "service_type", "covered_amount", "status" }
+                        "doctor_id", "service_date", "service_type", "covered_amount", "claim_status" }
         );
 
         header_columns.put("payout",
-                new String[] { "payout_id", "claim_id", "client_plan_id", "payout_date", "payout_amount", "status" }
+                new String[] { "payout_id", "claim_id", "payout_date", "payout_amount", "payout_status" }
         );
 
         header_columns.put("loa", //valid until is good also
                 new String[] { "request_id", "client_plan_id", "hospital_id", "doctor_id", "illness_id",
-                        "service_type", "status" });
+                        "service_type", "loa_status" });
     }
 
     private void createTransactionOptions() {

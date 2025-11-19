@@ -58,6 +58,7 @@ public abstract class BaseDialog extends JDialog {
 
     protected JPanel createFormPanel() {
         JPanel panel = new JPanel(new GridBagLayout());
+        int i = 0;
         panel.setBorder(BorderFactory.createEmptyBorder(10,10,10,10));
 
         GridBagConstraints gbc = new GridBagConstraints();
@@ -66,16 +67,23 @@ public abstract class BaseDialog extends JDialog {
         gbc.anchor = GridBagConstraints.WEST;
         gbc.insets = new Insets(5,5,5,5);
 
-        for (String column : columns) {
-            JLabel label = new JLabel(formatColumnName(column) + ":");
+        for (i = 0; i < columns.length ; i++) {
+            JLabel label = new JLabel(formatColumnName(columns[i]) + ":");
             label.setFont(UITools.getLabelFont());
 
             gbc.gridx = 0;
             gbc.weightx = 0.3;
             panel.add(label, gbc);
 
-            JComponent inputField = createInputField(column);
-            inputFields.put(column, inputField);
+            JComponent inputField = null;
+
+            if (i == 0) {
+                inputField = new JTextField(10);
+                inputField.setEnabled(false);
+            }
+            else
+                inputField = createInputField(columns[i]);
+            inputFields.put(columns[i], inputField);
 
             gbc.gridx = 1;
             gbc.weightx = 0.7;
