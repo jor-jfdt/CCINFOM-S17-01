@@ -57,31 +57,26 @@ public class RecordPanel extends BasePanel {
 
         panelMap.put("Clients", createCRUDPanel(
                 "clients",
-                "Search Client by Name:",
                 header_columns.get("clients")
         ));
 
         panelMap.put("Policy", createCRUDPanel(
                 "policy",
-                "Search Policy by Name:",
                 header_columns.get("policy")
         ));
 
         panelMap.put("Hospital", createCRUDPanel(
                 "hospital",
-                "Search Hospital by Name:",
                 header_columns.get("hospital")
         ));
 
         panelMap.put("Doctor", createCRUDPanel(
                 "doctor",
-                "Search Doctor by Name:",
                 header_columns.get("doctor")
         ));
 
         panelMap.put("Illness", createCRUDPanel(
                 "illness",
-                "Search Illness by Name:",
                 header_columns.get("illness")
         ));
 
