@@ -360,6 +360,10 @@ public abstract class BasePanel extends BackgroundPanel {
 
     public JButton[] getOptions() { return options;}
 
+    public JTextField getSearchField() {
+        return searchField;
+    }
+    protected JTextField searchField;
     protected  boolean optionsVisible = true;
     protected String activePanelKey;
     protected Map<String, JTable> tableMap;
