@@ -73,11 +73,33 @@ public class AppController implements ActionListener {
             if (e.getSource() == appGUI.getTransactionPanel().getOptions()[i]) {
                 String panelKey = appGUI.getTransactionPanel().getOptions()[i].getText().replace(" ", "_").toLowerCase();
                 currentTransactionType = panelKey;
-
                 tableName = appGUI.getTransactionPanel().getPanelToTableKey().get(panelKey);
 
                 try {
-                    List<Map<String, Object>> queryResult = appModel.getTableEntries(tableName, "*");
+                    List<Map<String, Object>> queryResult;
+                    if (panelKey.equals("doctor_consultation_claim")) {
+                        queryResult = appModel.processQuery(
+                                "SELECT * FROM claim WHERE service_type = ?;", "Consultation"
+                        );
+                    } else if (panelKey.equals("hospitalization_claim")) {
+                        queryResult = appModel.processQuery(
+                                "SELECT * FROM claim WHERE service_type <> ?;", "Consultation"
+                        );
+                    } else if (panelKey.equals("payout_to_doctor")) {
+                        queryResult = appModel.processQuery(
+                                "SELECT payout.* FROM payout " +
+                                        "JOIN claim ON payout.claim_id = claim.claim_id " +
+                                        "WHERE claim.service_type = ?;", "Consultation"
+                        );
+                    } else if (panelKey.equals("payout_to_hospital")) {
+                        queryResult = appModel.processQuery(
+                                "SELECT payout.* FROM payout " +
+                                        "JOIN claim ON payout.claim_id = claim.claim_id " +
+                                        "WHERE claim.service_type <> ?;", "Consultation"
+                        );
+                    } else {
+                        queryResult = appModel.getTableEntries(tableName, "*");
+                    }
                     DefaultTableModel dtm = appModel.makeTableModel(queryResult);
                     appGUI.getTransactionPanel().setTable(panelKey, dtm);
                 } catch (SQLException ex) {
