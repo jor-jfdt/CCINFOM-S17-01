@@ -55,7 +55,7 @@ public class AppController implements ActionListener {
         }
         for (int i = 0; i < appGUI.getRecordPanel().getOptions().length; i++) {
             if (e.getSource() == appGUI.getRecordPanel().getOptions()[i]) {
-                currentRecordType = appGUI.getRecordPanel().getOptions()[i].getText();
+                currentRecordType = appGUI.getRecordPanel().getOptions()[i].getText().toLowerCase();
                 System.out.println("Record Option " + appGUI.getRecordPanel().getOptions()[i].getText() + " is Clicked.");
                 appGUI.getRecordPanel().showCard(appGUI.getRecordPanel().getOptions()[i].getText());
 
@@ -121,6 +121,10 @@ public class AppController implements ActionListener {
                     try {
                         //appModel.insertIntoTable(currentRecordType.toLowerCase(), Arrays.copyOfRange(dialog.getFieldValues().values().toArray(), 1, currentColumns.length));
                         // Refresh table
+                        Map<String, Object> field_values = dialog.getFieldValues();
+                        String[] attributes = appModel.getDatabaseTableAttributes(currentRecordType).keySet().toArray(new String[0]);
+                        if (attributes[attributes.length - 1].equalsIgnoreCase("data_status")) field_values.put("data_status", true);
+                        appModel.insertIntoTable(currentRecordType.toLowerCase(), Arrays.copyOfRange(field_values.values().toArray(), 1, field_values.size()));
                         List<Map<String, Object>> queryResult = appModel.getTableEntriesInverted(currentRecordType.toLowerCase(), "data_status", true, "data_status");
                         DefaultTableModel dtm = appModel.makeTableModel(queryResult);
                         appGUI.getRecordPanel().setTable(currentRecordType.toLowerCase(), dtm);

@@ -122,18 +122,18 @@ public abstract class BaseDialog extends JDialog {
         }
     }
 
-    public String getFieldValue(String column) {
+    public Object getFieldValue(String column) {
         JComponent field = inputFields.get(column);
         if (field instanceof JTextField) {
             return ((JTextField) field).getText();
         } else if (field instanceof JComboBox) {
-            return (String) ((JComboBox<?>) field).getSelectedItem();
+            return ((JComboBox<?>) field).getSelectedItem();
         }
         return "";
     }
 
-    public Map<String, String> getFieldValues() {
-        Map<String, String> field = new LinkedHashMap<>();
+    public Map<String, Object> getFieldValues() {
+        Map<String, Object> field = new LinkedHashMap<>();
         for (String column : columns) {
             field.put(column, getFieldValue(column));
         }

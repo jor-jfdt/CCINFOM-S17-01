@@ -17,19 +17,19 @@ public class CRUDDialog extends BaseDialog {
         }
         if (column.toLowerCase().contains("date"))
             return new JTextField(10);
-        else if (column.toLowerCase().contains("is_") ||
-                 column.equalsIgnoreCase("sex") ||
-                 column.toLowerCase().contains("status")) {
-            JComboBox<String> comboBox = new JComboBox<>();
-            if (column.equals("sex")) {
-                comboBox.addItem("M");
-                comboBox.addItem("F");
-            } else {
-                comboBox.addItem("true");
-                comboBox.addItem("false");
-            }
+        else if (column.toLowerCase().contains("is_")){
+            JComboBox<Boolean> comboBox = new JComboBox<>();
+            comboBox.addItem(true);
+            comboBox.addItem(false);
             return comboBox;
-        }else if (column.equalsIgnoreCase("coverage_type")) {
+        }
+        else if (column.equalsIgnoreCase("sex")) {
+            JComboBox<String> comboBox = new JComboBox<>();
+            comboBox.addItem("M");
+            comboBox.addItem("F");
+            return comboBox;
+        }
+        else if (column.equalsIgnoreCase("coverage_type")) {
             JComboBox<String> comboBox = new JComboBox<>();
             comboBox.addItem("Inpatient");
             comboBox.addItem("Outpatient");
