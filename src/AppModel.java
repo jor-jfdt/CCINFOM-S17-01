@@ -530,8 +530,8 @@ public class AppModel {
 				table_name = (String)table_names.get(i).get("TABLE_NAME");
 				//System.out.println(table_name);
 				attributes = new LinkedHashMap<>();
-				column_names = processQuery("SELECT COLUMN_NAME, COLUMN_TYPE FROM INFORMATION_SCHEMA.COLUMNS" + 
-					" WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ?", table_name);
+				column_names = processQuery("SELECT COLUMN_NAME, COLUMN_TYPE FROM INFORMATION_SCHEMA.COLUMNS" +
+                        " WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ? ORDER BY ORDINAL_POSITION", table_name);
 				for (int j = 1; j < column_names.size(); j++) {
 					column_name = (String)column_names.get(j).get("COLUMN_NAME");
 					column_type = (String)column_names.get(j).get("COLUMN_TYPE");
