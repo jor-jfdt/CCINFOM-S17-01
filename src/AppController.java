@@ -191,13 +191,38 @@ public class AppController implements ActionListener {
                     JOptionPane.showMessageDialog(appGUI, "Please select a record to delete.", "No Selection", JOptionPane.WARNING_MESSAGE);
                 } else {
                     int selectedRow = appGUI.getRecordPanel().getTableMap().get(currentRecordType).getSelectedRow();
+                    Object[] rowData = new Object[currentColumns.length];
+                    for (int i = 0; i < currentColumns.length; i++) {
+                        rowData[i] = appGUI.getRecordPanel().getTableMap().get(currentRecordType).getValueAt(selectedRow, i);
+                        System.out.println("rowData[" + i + "]: " + rowData[i]);
+                    }
                     CRUDDialog dialog = new CRUDDialog(
                             appGUI,
                             "Delete " + currentRecordType,
                             BaseDialog.Mode.DELETE,
                             currentColumns
                     );
+                    for (String col : currentColumns) {
+                        dialog.setFieldValue(col, rowData[Arrays.asList(currentColumns).indexOf(col)].toString());
+                        System.out.println("Pre-fill " + col + " with value: " + rowData[Arrays.asList(currentColumns).indexOf(col)]);
+                    }
                     dialog.setVisible(true);
+                    if (dialog.isConfirmed()) {
+                        System.out.println("Confirm button clicked!");
+                        System.out.println("Values: " + dialog.getFieldValues());
+                        try {
+                            Integer primaryKeyRow = Integer.parseInt(dialog.getFieldValue(currentColumns[0]).toString());
+                            appModel.deleteById(currentRecordType.toLowerCase(), primaryKeyRow);
+                            List<Map<String, Object>> queryResult = appModel.getTableEntriesInverted(currentRecordType.toLowerCase(), "data_status", true, "data_status");
+                            DefaultTableModel dtm = appModel.makeTableModel(queryResult);
+                            appGUI.getRecordPanel().setTable(currentRecordType.toLowerCase(), dtm);
+                        } catch (SQLException ex) {
+                            ex.printStackTrace();
+                            JOptionPane.showMessageDialog(appGUI, "Error inserting record: " + ex.getMessage(), "Database Error", JOptionPane.ERROR_MESSAGE);
+                        }
+                    } else {
+                        System.out.println("Cancel button clicked!");
+                    }
                 }
             }
             System.out.println("Delete Button Clicked");
