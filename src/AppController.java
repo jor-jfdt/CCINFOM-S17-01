@@ -212,7 +212,7 @@ public class AppController implements ActionListener {
                         System.out.println("Values: " + dialog.getFieldValues());
                         try {
                             Integer primaryKeyRow = Integer.parseInt(dialog.getFieldValue(currentColumns[0]).toString());
-                            appModel.deleteById(currentRecordType.toLowerCase(), primaryKeyRow);
+                            appModel.updateColumnValueOfId(currentRecordType.toLowerCase(), "data_status", primaryKeyRow, false);
                             List<Map<String, Object>> queryResult = appModel.getTableEntriesInverted(currentRecordType.toLowerCase(), "data_status", true, "data_status");
                             DefaultTableModel dtm = appModel.makeTableModel(queryResult);
                             appGUI.getRecordPanel().setTable(currentRecordType.toLowerCase(), dtm);
