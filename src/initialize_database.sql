@@ -80,16 +80,7 @@ CREATE TABLE IF NOT EXISTS client_payment (
     payment_date DATE,
     payment_method VARCHAR(127),
     premium_payment_status VARCHAR(127),
-    FOREIGN KEY (client_plan_id) REFERENCES client_policy(policy_id)
-);
-
-CREATE TABLE IF NOT EXISTS payout (
-	payout_id INT PRIMARY KEY AUTO_INCREMENT NOT NULL,
-	claim_id INT NOT NULL,
-    payout_date DATE,
-    payout_amount FLOAT NOT NULL,
-    payout_status VARCHAR(127) NOT NULL,
-    FOREIGN KEY (claim_id) REFERENCES hospital(claim_id)
+    FOREIGN KEY (client_plan_id) REFERENCES client_policy(client_plan_id)
 );
 
 CREATE TABLE IF NOT EXISTS claim (
@@ -109,6 +100,15 @@ CREATE TABLE IF NOT EXISTS claim (
     FOREIGN KEY (doctor_id) REFERENCES doctor(doctor_id)
 );
 
+CREATE TABLE IF NOT EXISTS payout (
+	payout_id INT PRIMARY KEY AUTO_INCREMENT NOT NULL,
+	claim_id INT NOT NULL,
+    payout_date DATE,
+    payout_amount FLOAT NOT NULL,
+    payout_status VARCHAR(127) NOT NULL,
+    FOREIGN KEY (claim_id) REFERENCES claim(claim_id)
+);
+
 CREATE TABLE IF NOT EXISTS loa (
 	request_id INT PRIMARY KEY AUTO_INCREMENT NOT NULL,
 	client_plan_id INT NOT NULL,
@@ -117,7 +117,7 @@ CREATE TABLE IF NOT EXISTS loa (
 	illness_id INT NOT NULL,
 	service_type VARCHAR(127) NOT NULL,
 	loa_status VARCHAR(15) NOT NULL,
-	FOREIGN KEY (client_plan_id) REFERENCES client_policy(policy_id),
+	FOREIGN KEY (client_plan_id) REFERENCES client_policy(client_plan_id),
 	FOREIGN KEY (hospital_id) REFERENCES hospital(hospital_id),
 	FOREIGN KEY (doctor_id) REFERENCES doctor(doctor_id),
 	FOREIGN KEY (illness_id) REFERENCES illness(illness_id)
