@@ -13,7 +13,7 @@ public class Driver {
 		AppController controller = new AppController(app, model);
         controller.connectToDatabase();
 		
-		populateDatabase(model);
+		//populateDatabase(model);
     }
 
 	private static void configureLookAndFeel() {

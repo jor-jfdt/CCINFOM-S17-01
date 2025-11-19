@@ -166,24 +166,10 @@ public abstract class BasePanel extends BackgroundPanel {
         add(rightPanel, gbc);
     }
 
-    protected JPanel createCRUDPanel(String key, String searchLabel, String[] header) {
+    protected JPanel createCRUDPanel(String key, String[] header) {
         JPanel crudPanel = new JPanel(new BorderLayout(10,10));
         crudPanel.setBorder(BorderFactory.createEmptyBorder(10,10,10,10));
         crudPanel.setOpaque(false);
-
-        topCardPanel = new JPanel(new BorderLayout(5, 0));
-        topCardPanel.setOpaque(false);
-
-        JLabel label = new JLabel(searchLabel + " ");
-        label.setForeground(UITools.getPrimaryColor());
-        label.setFont(UITools.getLabelFont());
-
-        topCardPanel.add(label, BorderLayout.WEST);
-
-        JTextField searchField = new JTextField();
-        topCardPanel.add(searchField, BorderLayout.CENTER);
-
-        crudPanel.add(topCardPanel, BorderLayout.NORTH);
 
         JTable table = new JTable(new DefaultTableModel(new Object[][] {}, header));
 
@@ -360,10 +346,6 @@ public abstract class BasePanel extends BackgroundPanel {
 
     public JButton[] getOptions() { return options;}
 
-    public JTextField getSearchField() {
-        return searchField;
-    }
-    protected JTextField searchField;
     protected  boolean optionsVisible = true;
     protected String activePanelKey;
     protected Map<String, JTable> tableMap;
@@ -380,7 +362,6 @@ public abstract class BasePanel extends BackgroundPanel {
     protected JButton backButton;
 
     protected CardLayout rightCardLayout;
-    protected JPanel topCardPanel;
     protected JPanel centerCardPanel;
     protected JPanel southButtonPanel;
 }
