@@ -141,8 +141,6 @@ public class Driver {
 		model.insertIntoTable("doctor", "Beverly", "Crusher", "C", "General Practitioner", "09171001009", "crusher@enterprise.com", true);
 		model.insertIntoTable("doctor", "Drake", "Ramoray", "F", "Neurosurgeon", "09171001010", "drake@days.com", true);
 
-		// 5. CLIENT_POLICY TABLE (10 Entries)
-		// Note: Assumes Member IDs 1-10 and Plan IDs 1-10 exist.
-		// Schema: member_id, plan_id, preexisting_illnesses, effective_date, expiry_date, policy_status
+		
 	}
 }
