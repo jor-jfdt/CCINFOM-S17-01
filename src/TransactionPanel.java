@@ -48,7 +48,7 @@ public class TransactionPanel extends BasePanel {
         );
 
         header_columns.put("claim",
-                new String[] { "claim_id", "client_plan_id", "illness_id", "claim_date", "hospital_id",
+                new String[] { "claim_id", "client_plan_id", "illness_id", "hospital_id",
                         "doctor_id", "service_date", "service_type", "covered_amount", "status" }
         );
 
@@ -58,8 +58,7 @@ public class TransactionPanel extends BasePanel {
 
         header_columns.put("loa", //valid until is good also
                 new String[] { "request_id", "client_plan_id", "hospital_id", "doctor_id", "illness_id",
-                        "service_type","valid_until", "status" }
-        );
+                        "service_type", "status" });
     }
 
     private void createTransactionOptions() {
