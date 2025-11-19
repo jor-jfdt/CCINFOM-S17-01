@@ -61,7 +61,7 @@ public class AppController implements ActionListener {
 
                 try {
                     List<Map<String, Object>> queryResult = appModel.getTableEntriesInverted(appGUI.getRecordPanel().getOptions()[i].getText().toLowerCase(), "data_status", true, "data_status");
-                    currentColumns = queryResult.getFirst().keySet().toArray(new String[0]);
+                    currentColumns = queryResult.get(0).keySet().toArray(new String[0]);
                     DefaultTableModel dtm = appModel.makeTableModel(queryResult);
                     appGUI.getRecordPanel().setTable(appGUI.getRecordPanel().getOptions()[i].getText().toLowerCase(), dtm);
                 } catch(SQLException ex) {
@@ -72,18 +72,14 @@ public class AppController implements ActionListener {
         //Connect Transaction Panel Options to Database
         for (int i = 0; i < appGUI.getTransactionPanel().getOptions().length; i++) {
             if (e.getSource() == appGUI.getTransactionPanel().getOptions()[i]) {
-                currentTransactionType = appGUI.getTransactionPanel().getOptions()[i].getText().replace(" ", "_").toLowerCase();
-                for (String key : appGUI.getTransactionPanel().getHeaderColumns().keySet()) {
-                    if (appGUI.getTransactionPanel().getOptions()[i].getText().toLowerCase().contains(key.replace("_", " "))) {
-                        tableName = key.replace(" ", "_");
-                        break;
-                    }
-                }
+                String panelKey = appGUI.getTransactionPanel().getOptions()[i].getText().replace(" ", "_").toLowerCase();
+                currentTransactionType = panelKey;
+
+                tableName = appGUI.getTransactionPanel().getPanelToTableKey().get(panelKey);
 
                 try {
                     List<Map<String, Object>> queryResult = appModel.getTableEntries(tableName, "*");
                     DefaultTableModel dtm = appModel.makeTableModel(queryResult);
-                    String panelKey = appGUI.getTransactionPanel().getOptions()[i].getText().replace(" ", "_").toLowerCase();
                     appGUI.getTransactionPanel().setTable(panelKey, dtm);
                 } catch (SQLException ex) {
                     ex.printStackTrace();
@@ -180,25 +176,21 @@ public class AppController implements ActionListener {
             } else {
                 String baseKey = appGUI.getTransactionPanel().getPanelToTableKey().get(currentTransactionType);
                 String[] headers = appGUI.getTransactionPanel().getHeaderColumns().get(baseKey);
-
-                System.out.println("currentTransactionType: " + currentTransactionType);
-                System.out.println("baseKey: " + baseKey);
-                System.out.println("headers: " + (headers == null ? "null" : java.util.Arrays.toString(headers)));
-
                 if (baseKey == null || headers == null) {
                     JOptionPane.showMessageDialog(appGUI, "Invalid transaction type or header columns not found.", "Error", JOptionPane.ERROR_MESSAGE);
                     return;
                 }
                 CRUDDialog dialog = new CRUDDialog(
                         appGUI,
-                        "Add " + currentTransactionType,
+                        "Add Transaction",
                         BaseDialog.Mode.ADD,
                         headers
                 );
                 dialog.setVisible(true);
             }
             System.out.println("Transaction Add Button Clicked");
-        } else if (e.getSource() == appGUI.getTransactionPanel().getUpdateButton()) {
+        }
+        else if (e.getSource() == appGUI.getTransactionPanel().getUpdateButton()) {
             if (currentTransactionType == null) {
                 JOptionPane.showMessageDialog(appGUI, "Please select a transaction option first.", "Select Option", JOptionPane.WARNING_MESSAGE);
             } else {
@@ -209,7 +201,7 @@ public class AppController implements ActionListener {
                     String baseKey = appGUI.getTransactionPanel().getPanelToTableKey().get(currentTransactionType);
                     CRUDDialog dialog = new CRUDDialog(
                             appGUI,
-                            "Update " + currentTransactionType,
+                            "Update Transaction",
                             BaseDialog.Mode.UPDATE,
                             appGUI.getTransactionPanel().getHeaderColumns().get(baseKey)
                     );
@@ -311,7 +303,7 @@ public class AppController implements ActionListener {
         String[] headers = {"Hospital Name", "Claims Count"};
         Object[][] data = new Object[matrix.size()][headers.length];
 		for (i = 1; i < matrix.size(); i++) {
-			for (j = 0, values = matrix.get(i).values().toArray(); j < headers.length; j++) {
+			for (j = 0, values = matrix.get(i).values().toArray(new Object[0]); j < headers.length; j++) {
 				System.out.println(values[j]);
 				data[i][j] = values[j];
 			}
