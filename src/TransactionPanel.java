@@ -67,25 +67,18 @@ public class TransactionPanel extends BasePanel {
         createHeaderColumns();
 
         panelMap.put("Buy Client Policy", createCRUDPanel("buy_client_policy",
-                "Search Transaction by Client Name:",
                 header_columns.get("client_policy")));
         panelMap.put("Client Payment of Premium", createCRUDPanel("client_payment_of_premium",
-                "Search Payment by Client Name:",
                 header_columns.get("client_payment")));
         panelMap.put("Doctor Consultation Claim", createCRUDPanel("doctor_consultation_claim",
-                "Search Consultation by Client Name:",
                 header_columns.get("claim")));
         panelMap.put("Hospitalization Claim", createCRUDPanel("hospitalization_claim",
-                "Search Hospitalization by Client Name:",
                 header_columns.get("claim")));
         panelMap.put("Payout to Hospital", createCRUDPanel("payout_to_hospital",
-                "Search Payout by Hospital Name:",
                 header_columns.get("payout")));
         panelMap.put("Payout to Doctor", createCRUDPanel("payout_to_doctor",
-                "Search Payout by Doctor Name:",
                 header_columns.get("payout")));
         panelMap.put("Request LOA", createCRUDPanel("request_loa",
-                "Search LOA by Client Name:",
                 header_columns.get("loa")));
 
         populateCardLayout(panelMap);
