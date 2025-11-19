@@ -11,9 +11,7 @@ public class CRUDDialog extends BaseDialog {
     @Override
     protected JComponent createInputField(String column) {
         if (column.toLowerCase().endsWith("_id") ){
-            JTextField idField = new JTextField(10);
-            idField.setEnabled(false);
-            return idField;
+            return new JTextField(10);
         }
         if (column.toLowerCase().contains("date"))
             return new JTextField(10);
@@ -31,10 +29,11 @@ public class CRUDDialog extends BaseDialog {
         }
         else if (column.equalsIgnoreCase("coverage_type")) {
             JComboBox<String> comboBox = new JComboBox<>();
-            comboBox.addItem("Inpatient");
-            comboBox.addItem("Outpatient");
-            comboBox.addItem("Emergency");
-            comboBox.addItem("Preventive");
+            comboBox.addItem("Comprehensive");
+            comboBox.addItem("In-Patient");
+            comboBox.addItem("Out-Patient");
+            comboBox.addItem("Emergency Only");
+            comboBox.addItem("All-Access");
             return comboBox;
         } else if (column.equalsIgnoreCase("payment_period")){
             JComboBox<String> comboBox = new JComboBox<>();
@@ -42,6 +41,15 @@ public class CRUDDialog extends BaseDialog {
             comboBox.addItem("Quarterly");
             comboBox.addItem("Semi-Annual");
             comboBox.addItem("Annual");
+            return comboBox;
+        } else if (column.equalsIgnoreCase("payment_method")) {
+            JComboBox<String> comboBox = new JComboBox<>();
+            comboBox.addItem("Credit Card");
+            comboBox.addItem("Debit Card");
+            comboBox.addItem("Bank Transfer");
+            comboBox.addItem("Cash");
+            comboBox.addItem("Check");
+            comboBox.addItem("Mobile Payment");
             return comboBox;
         }else {
             return new JTextField(20);
