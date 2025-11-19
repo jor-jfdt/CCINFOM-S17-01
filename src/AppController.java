@@ -8,6 +8,7 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.HashMap;
 import java.util.Map;
 
 public class AppController implements ActionListener {
@@ -15,8 +16,6 @@ public class AppController implements ActionListener {
         this.appGUI = appGUI;
         this.appModel = appModel;
         this.appGUI.addMenuButtonListener(this);
-
-        setupReportPanel();
     }
     public void connectToDatabase() throws SQLException, IOException, ClassNotFoundException {
         appModel.enterDatabase();
@@ -242,12 +241,13 @@ public class AppController implements ActionListener {
                 }
             }
         }
-    }
-
-    private void setupReportPanel() {
-        ReportPanel reportPanel = appGUI.getReportPanel();
-
-        reportPanel.addGenerateReportListener(e -> generateReport());
+        if (e.getSource() == appGUI.getReportPanel().getGenerateButton()) {
+            if (appGUI.getReportPanel().getActivePanelKey() == "empty")
+                JOptionPane.showMessageDialog(appGUI, "Please select a report option first.", "Select Option", JOptionPane.WARNING_MESSAGE);
+            else
+                generateReport();
+            System.out.println("Generate Report Button Clicked");
+        }
     }
 
     private void generateReport() {
@@ -286,7 +286,7 @@ public class AppController implements ActionListener {
     }
 
     private String generateFinancialReport(Integer month, int year) throws Exception {
-		String date_filters = "MONTH(cp.payment_date) = ? AND YEAR(cp.payment_date) = ?";
+		String date_filters = "MONTH(cp.payment_date) = ? OR YEAR(cp.payment_date) = ?";
 		Double overdues = (Double)appModel.processQuery(
 			"SELECT COALESCE(SUM(amount), 0) AS total_overdue_payments " + 
 			"FROM clients c JOIN client_payment cp " +
@@ -307,16 +307,16 @@ public class AppController implements ActionListener {
 		, "complete", month, year).get(1).get("total_payouts");
 		
         // Placeholder values - replace with actual database queries later
-        double revenue = 0.0;
-        double expenses = 0.0;
-        double netIncome = 0.0;
-        double overDue = 0.0;
+        double revenue = completes != null ? completes : 0.0;
+		double expenses = payouts != null ? payouts : 0.0;
+		double overDue = overdues != null ? overdues : 0.0;
+		double netIncome = revenue - expenses;
 		
         return ReportGenerator.generateFinancialReport(month, year, revenue, expenses, netIncome, overDue);
     }
 	
     private String generateHealthProviderReport(Integer month, int year) throws Exception {
-		String date_filters = "MONTH(cr.service_date) = ? AND YEAR(cr.service_date) = ?";
+		String date_filters = "MONTH(cr.service_date) = ? OR YEAR(cr.service_date) = ?";
         // Note: This list is one-based, i.e. the index starts at 1.
 		// Returns List<   Map<         String,          Object>>
 		//          ^       ^             ^                ^
@@ -331,14 +331,17 @@ public class AppController implements ActionListener {
 			"ORDER BY hospital_claims DESC;"
 		, "complete", month, year);
 		Object[] values;
-		int i, j;
 		// Placeholder - replace with actual database queries later
         String[] headers = {"Hospital Name", "Claims Count"};
+		HashMap<String, String> correspondents = new HashMap<>() {{
+			put(headers[0], "hospital_name");
+			put(headers[1], "hospital_claims");
+		}};
         Object[][] data = new Object[matrix.size()][headers.length];
-		for (i = 1; i < matrix.size(); i++) {
-			for (j = 0, values = matrix.get(i).values().toArray(new Object[0]); j < headers.length; j++) {
-				System.out.println(values[j]);
-				data[i][j] = values[j];
+		for (int i = 1; i < matrix.size(); i++) {
+			Map<String, Object> row = matrix.get(i);
+			for (int j = 0; j < headers.length; j++) {
+				data[i][j] = row.get(correspondents.get(headers[j]));
 			}
 		}
 		
@@ -351,7 +354,7 @@ public class AppController implements ActionListener {
     }
 
     private String generatePolicyReport(Integer month, int year) throws Exception {
-		String date_filters = "MONTH(claim.service_date) = ? AND YEAR(claim.service_date) = ?";
+		String date_filters = "MONTH(claim.service_date) = ? OR YEAR(claim.service_date) = ?";
 		// Note: This list is one-based, i.e. the index starts at 1.
 		// Returns List<   Map<         String,          Object>>
 		//          ^       ^             ^                ^
@@ -370,14 +373,19 @@ public class AppController implements ActionListener {
 			"ORDER BY policy_claims DESC, total_service_amount DESC, total_covered_amount DESC; "
 		, "complete", month, year);
         Object[] values;
-		int i, j;
 		// Placeholder - replace with actual database queries later
         String[] headers = {"Policy Name", "Claims Count", "Total Service Amount", "Total Covered Amount"};
-        Object[][] data = new Object[matrix.size()][headers.length];
-		for (i = 1; i < matrix.size(); i++) {
-			for (j = 0, values = matrix.get(i).values().toArray(); j < headers.length; j++) {
-				System.out.println(values[j]);
-				data[i][j] = values[j];
+        HashMap<String, String> correspondents = new HashMap<>() {{
+			put(headers[0], "plan_name");
+			put(headers[1], "policy_claims");
+			put(headers[2], "total_service_amount");
+			put(headers[3], "total_covered_amount");
+		}};
+		Object[][] data = new Object[matrix.size()][headers.length];
+		for (int i = 1; i < matrix.size(); i++) {
+			Map<String, Object> row = matrix.get(i);
+			for (int j = 0; j < headers.length; j++) {
+				data[i][j] = row.get(correspondents.get(headers[j]));
 			}
 		}
 		
@@ -390,7 +398,7 @@ public class AppController implements ActionListener {
     }
 
     private String generateIllnessTrendReport(Integer month, int year) throws Exception {
-		String date_filters = "MONTH(claim.service_date) = ? AND YEAR(claim.service_date) = ?";
+		String date_filters = "MONTH(claim.service_date) = ? OR YEAR(claim.service_date) = ?";
 		// Note: This list is one-based, i.e. the index starts at 1.
 		// Returns List<   Map<         String,          Object>>
 		//          ^       ^             ^                ^
@@ -409,14 +417,19 @@ public class AppController implements ActionListener {
 			"ORDER BY illness_claims DESC, total_service_amount DESC, total_covered_amount DESC; "
 		, "complete", month, year);
         Object[] values;
-		int i, j;
         // Placeholder - replace with actual database queries later
         String[] headers = {"Illness Name", "Claims Count", "Total Service Amount", "Total Covered Amount"};
+        HashMap<String, String> correspondents = new HashMap<>() {{
+			put(headers[0], "illness_name");
+			put(headers[1], "illness_claims");
+			put(headers[2], "total_service_amount");
+			put(headers[3], "total_covered_amount");
+		}};
         Object[][] data = new Object[matrix.size()][headers.length];
-		for (i = 1; i < matrix.size(); i++) {
-			for (j = 0, values = matrix.get(i).values().toArray(); j < headers.length; j++) {
-				System.out.println(values[j]);
-				data[i][j] = values[j];
+		for (int i = 1; i < matrix.size(); i++) {
+			Map<String, Object> row = matrix.get(i);
+			for (int j = 0; j < headers.length; j++) {
+				data[i][j] = row.get(correspondents.get(headers[j]));
 			}
 		}
 		
