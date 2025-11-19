@@ -156,6 +156,30 @@ public class AppController implements ActionListener {
                         System.out.println("Pre-fill " + col + " with value: " + rowData[Arrays.asList(currentColumns).indexOf(col)]);
                     }
                     dialog.setVisible(true);
+                    if (dialog.isConfirmed()) {
+                        System.out.println("Confirm button clicked!");
+                        System.out.println("Values: " + dialog.getFieldValues());
+                        try {
+                            Map<String, Object> field_values = dialog.getFieldValues();
+                            String[] attributes = appModel.getDatabaseTableAttributes(currentRecordType).keySet().toArray(new String[0]);
+                            if (attributes[attributes.length - 1].equalsIgnoreCase("data_status")) field_values.put("data_status", true);
+                            Object[] values = field_values.values().toArray();
+                            //convert into prehistoric for loop
+                            for (int i = 1; i < currentColumns.length; i++) {
+                                System.out.println("Updating " + currentColumns[i] + " to value: " + values[i]);
+                                appModel.updateColumnValueOfId(currentRecordType.toLowerCase(), currentColumns[i], Integer.parseInt((String)values[0]) , values[i]);
+                            }
+                            List<Map<String, Object>> queryResult = appModel.getTableEntriesInverted(currentRecordType.toLowerCase(), "data_status", true, "data_status");
+                            DefaultTableModel dtm = appModel.makeTableModel(queryResult);
+                            appGUI.getRecordPanel().setTable(currentRecordType.toLowerCase(), dtm);
+                        } catch (SQLException ex) {
+                            ex.printStackTrace();
+                            JOptionPane.showMessageDialog(appGUI, "Error inserting record: " + ex.getMessage(), "Database Error", JOptionPane.ERROR_MESSAGE);
+                        }
+                    } else {
+                        System.out.println("Cancel button clicked!");
+                    }
+
                 }
             }
             System.out.println("Update Button Clicked");
@@ -167,13 +191,38 @@ public class AppController implements ActionListener {
                     JOptionPane.showMessageDialog(appGUI, "Please select a record to delete.", "No Selection", JOptionPane.WARNING_MESSAGE);
                 } else {
                     int selectedRow = appGUI.getRecordPanel().getTableMap().get(currentRecordType).getSelectedRow();
+                    Object[] rowData = new Object[currentColumns.length];
+                    for (int i = 0; i < currentColumns.length; i++) {
+                        rowData[i] = appGUI.getRecordPanel().getTableMap().get(currentRecordType).getValueAt(selectedRow, i);
+                        System.out.println("rowData[" + i + "]: " + rowData[i]);
+                    }
                     CRUDDialog dialog = new CRUDDialog(
                             appGUI,
                             "Delete " + currentRecordType,
                             BaseDialog.Mode.DELETE,
                             currentColumns
                     );
+                    for (String col : currentColumns) {
+                        dialog.setFieldValue(col, rowData[Arrays.asList(currentColumns).indexOf(col)].toString());
+                        System.out.println("Pre-fill " + col + " with value: " + rowData[Arrays.asList(currentColumns).indexOf(col)]);
+                    }
                     dialog.setVisible(true);
+                    if (dialog.isConfirmed()) {
+                        System.out.println("Confirm button clicked!");
+                        System.out.println("Values: " + dialog.getFieldValues());
+                        try {
+                            Integer primaryKeyRow = Integer.parseInt(dialog.getFieldValue(currentColumns[0]).toString());
+                            appModel.deleteById(currentRecordType.toLowerCase(), primaryKeyRow);
+                            List<Map<String, Object>> queryResult = appModel.getTableEntriesInverted(currentRecordType.toLowerCase(), "data_status", true, "data_status");
+                            DefaultTableModel dtm = appModel.makeTableModel(queryResult);
+                            appGUI.getRecordPanel().setTable(currentRecordType.toLowerCase(), dtm);
+                        } catch (SQLException ex) {
+                            ex.printStackTrace();
+                            JOptionPane.showMessageDialog(appGUI, "Error inserting record: " + ex.getMessage(), "Database Error", JOptionPane.ERROR_MESSAGE);
+                        }
+                    } else {
+                        System.out.println("Cancel button clicked!");
+                    }
                 }
             }
             System.out.println("Delete Button Clicked");
@@ -195,6 +244,27 @@ public class AppController implements ActionListener {
                         headers
                 );
                 dialog.setVisible(true);
+
+                if (dialog.isConfirmed()) {
+                    try {
+                        Map<String, Object> field_values = dialog.getFieldValues();
+                        // Exclude PK if needed (usually first column)
+                        Object[] values = Arrays.copyOfRange(field_values.values().toArray(), 1, field_values.size());
+                        for (Object v : values) {
+                            if (v == null || v.toString().trim().isEmpty()) {
+                                JOptionPane.showMessageDialog(appGUI, "Please fill all required fields.", "Input Error", JOptionPane.ERROR_MESSAGE);
+                                return;
+                            }
+                        }
+                        appModel.insertIntoTable(baseKey, values);
+                        List<Map<String, Object>> queryResult = appModel.getTableEntries(baseKey, "*");
+                        DefaultTableModel dtm = appModel.makeTableModel(queryResult);
+                        appGUI.getTransactionPanel().setTable(currentTransactionType, dtm);
+                    } catch (SQLException ex) {
+                        ex.printStackTrace();
+                        JOptionPane.showMessageDialog(appGUI, "Error updating record: " + ex.getMessage(), "Database Error", JOptionPane.ERROR_MESSAGE);
+                    }
+                }
             }
             System.out.println("Transaction Add Button Clicked");
         }
@@ -207,6 +277,7 @@ public class AppController implements ActionListener {
                     JOptionPane.showMessageDialog(appGUI, "Please select a record to update.", "No Selection", JOptionPane.WARNING_MESSAGE);
                 } else {
                     String baseKey = appGUI.getTransactionPanel().getPanelToTableKey().get(currentTransactionType);
+                    String[] headers = appGUI.getTransactionPanel().getHeaderColumns().get(baseKey);
                     CRUDDialog dialog = new CRUDDialog(
                             appGUI,
                             "Update Transaction",
@@ -214,6 +285,23 @@ public class AppController implements ActionListener {
                             appGUI.getTransactionPanel().getHeaderColumns().get(baseKey)
                     );
                     dialog.setVisible(true);
+
+                    if (dialog.isConfirmed()) {
+                        try {
+                            Map<String, Object> field_values = dialog.getFieldValues();
+                            Object[] values = field_values.values().toArray();
+                            // Update each column except PK (assumed first column)
+                            for (int i = 1; i < headers.length; i++) {
+                                appModel.updateColumnValueOfId(baseKey, headers[i], Integer.parseInt(values[0].toString()), values[i]);
+                            }
+                            List<Map<String, Object>> queryResult = appModel.getTableEntries(baseKey, "*");
+                            DefaultTableModel dtm = appModel.makeTableModel(queryResult);
+                            appGUI.getTransactionPanel().setTable(currentTransactionType, dtm);
+                        } catch (SQLException ex) {
+                            ex.printStackTrace();
+                            JOptionPane.showMessageDialog(appGUI, "Error updating transaction: " + ex.getMessage(), "Database Error", JOptionPane.ERROR_MESSAGE);
+                        }
+                    }
                 }
             }
         }
@@ -444,6 +532,26 @@ public class AppController implements ActionListener {
         return ReportGenerator.generateTableReport(title, headers, data);
     }
 
+    private boolean validateFields(String[] headers, Map<String, Object> fieldValues, boolean isInsert) {
+        for (int i = 0; i < headers.length; i++) {
+            if (isInsert && i == 0) continue;
+            Object value = fieldValues.get(headers[i]);
+            if (value == null || value.toString().trim().isEmpty()) {
+                JOptionPane.showMessageDialog(appGUI, "Please fill all required fields.", "Input Error", JOptionPane.ERROR_MESSAGE);
+                return false;
+            }
+            if (headers[i].toLowerCase().endsWith("_id")) {
+                try {
+                    int fk = Integer.parseInt(value.toString());
+                    if (fk <= 0) throw new NumberFormatException();
+                } catch (NumberFormatException ex) {
+                    JOptionPane.showMessageDialog(appGUI, "Invalid foreign key value for " + headers[i], "Input Error", JOptionPane.ERROR_MESSAGE);
+                    return false;
+                }
+            }
+        }
+        return true;
+    }
     private String currentTransactionType;
     private String currentRecordType;
     private String[] currentColumns;
