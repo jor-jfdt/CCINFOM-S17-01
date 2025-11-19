@@ -50,6 +50,7 @@ public class CRUDDialog extends BaseDialog {
             comboBox.addItem("Bank Transfer");
             comboBox.addItem("Cash");
             comboBox.addItem("Check");
+            comboBox.addItem("N/A");
             return comboBox;
         }else if (column.contains("status")) {
             if (column.contains("claim") ||
@@ -66,6 +67,7 @@ public class CRUDDialog extends BaseDialog {
                 comboBox.addItem("Pending");
                 comboBox.addItem("Partial");
                 comboBox.addItem("Processing");
+                comboBox.addItem("Overdue");
                 return comboBox;
             }
             else {

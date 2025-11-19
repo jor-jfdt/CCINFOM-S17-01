@@ -5,7 +5,9 @@ import java.awt.event.ActionListener;
 import java.io.IOException;
 import java.sql.SQLException;
 import java.sql.SQLIntegrityConstraintViolationException;
+import java.text.DateFormatSymbols;
 import java.time.LocalDate;
+import java.time.Period;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -444,7 +446,7 @@ public class AppController implements ActionListener {
             }
         }
         String title = (month != null) ?
-                String.format("Health Provider Report - %s %d", new java.text.DateFormatSymbols().getMonths()[month - 1], year) :
+                String.format("Health Provider Report - %s %d", new DateFormatSymbols().getMonths()[month - 1], year) :
                 String.format("Health Provider Report - %d", year);
         return ReportGenerator.generateTableReport(title, headers, data);
     }
@@ -480,7 +482,7 @@ public class AppController implements ActionListener {
             }
         }
         String title = (month != null) ?
-                String.format("Policy Report - %s %d", new java.text.DateFormatSymbols().getMonths()[month - 1], year) :
+                String.format("Policy Report - %s %d", new DateFormatSymbols().getMonths()[month - 1], year) :
                 String.format("Policy Report - %d", year);
         return ReportGenerator.generateTableReport(title, headers, data);
     }
@@ -515,7 +517,7 @@ public class AppController implements ActionListener {
             }
         }
         String title = (month != null) ?
-                String.format("Illness Trend Report - %s %d", new java.text.DateFormatSymbols().getMonths()[month - 1], year) :
+                String.format("Illness Trend Report - %s %d", new DateFormatSymbols().getMonths()[month - 1], year) :
                 String.format("Illness Trend Report - %d", year);
         return ReportGenerator.generateTableReport(title, headers, data);
     }
@@ -533,6 +535,15 @@ public class AppController implements ActionListener {
                 try {
                     if (AppModel.SQLUtils.dateIsValid(value.toString())) {
                         // Valid
+                        if (headers[i].toLowerCase().contains("birth")) {
+                            LocalDate sqlDate = AppModel.SQLUtils.stringToDate(value.toString());
+                            Period p = Period.between(sqlDate, LocalDate.now());
+                            int yeardiff = p.getYears();
+                            if (yeardiff < 18 || yeardiff > 65) {
+                                JOptionPane.showMessageDialog(appGUI, "Age must be between 18 and 65 for " + headers[i], "Input Error", JOptionPane.ERROR_MESSAGE);
+                                return false;
+                            }
+                        }
                         System.out.println("Valid date: " + value);
                     } else {
                         AppModel.SQLUtils.stringToDate(value.toString());
